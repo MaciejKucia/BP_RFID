@@ -165,7 +165,7 @@ void BP_RFID_TRF_Turn_RF_Off()
 	BP_RFID_LED1(LED_OFF);
 	// turn RF_ON bit off
 	char reg = BP_RFID_Read_Register(RF_REG_CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg & ~(CSR_RF_ON));
+	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg & ~(TRF_CSR_RF_ON));
 
 	// No RF no interrupts TODO: check
 	BP_RFID_TRF_IRQ_Clear();
@@ -176,12 +176,12 @@ void BP_RFID_TRF_Turn_RF_On()
 	BP_RFID_LED1(LED_BLINK_FAST);
 	// turn RF_ON bit on
 	char reg = BP_RFID_Read_Register(RF_REG_CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg | (CSR_RF_ON));
+	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg | (TRF_CSR_RF_ON));
 }
 
 void BP_RFID_TRF_Modulator_Control(char control)
 {
-	BP_RFID_Write_Register(MODULATOR_CONTROL, control);
+	BP_RFID_Write_Register(TRF_REG_MODULATOR_CONTROL, control);
 }
 
 char BP_RFID_TRF_Get_ISO(void)
@@ -414,9 +414,13 @@ void BP_RFID_Init()
 
 /// IRQ input handler
 ///
-// TODO: implement error handling
+/// TODO: Implement callback
 void IRQ_ISR(void)
 {
+	char c;
+	int i;
+	char s;
+
 	// read int register and clear it
 	char reg = BP_RFID_Read_Register(TRF_REG_IRQ_STATUS);
 	BP_RFID_Write_Register(TRF_REG_IRQ_STATUS, 0x00);
@@ -448,7 +452,16 @@ void IRQ_ISR(void)
 		if (reg & TRF_IRQ_NFC_Tx_End)
 			printf("IRQ set due to end of TX");
 		if (reg & TRF_IRQ_NFC_Rx_Start)
+		{
 			printf("IRQ set due to RX start");
+
+			printf("%d bytes in FIFO\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
+			BP_RFID_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
+			printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
+			for (i = 0; i < s; ++i)	printf("(%x)", BP_RFID_BUFFER[i]);
+			BP_RFID_TRF_FIFO_Reset();
+		}
+
 		if (reg & TRF_IRQ_NFC_FIFO_High)
 			printf("Signals the FIFO is 1/3 > FIFO > 2/3");
 		if (reg & TRF_IRQ_NFC_Protocol_Error)
@@ -456,7 +469,16 @@ void IRQ_ISR(void)
 		if (reg & TRF_IRQ_NFC_SDD_Finished)
 			printf("SDD finished");
 		if (reg & TRF_IRQ_NFC_RF_Field_Change)
+		{
 			printf("RF field change");
+
+			c = BP_RFID_Read_Register(TRF_REG_NFC_Target_Det_Lvl);
+			c &= ~(TRF_NFC_Target_Detection_SDD_Enabled);
+			BP_RFID_Write_Register(TRF_REG_NFC_Target_Det_Lvl,c);
+
+
+
+		}
 		if (reg & TRF_IRQ_NFC_Col_Avoid_Finished)
 			printf("RF collision avoidance finished");
 		if (reg & TRF_IRQ_NFC_Col_Avoid_Failed)

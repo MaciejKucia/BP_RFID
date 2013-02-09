@@ -111,6 +111,8 @@
 //is reset to maximum gain at EN = 0 and POR = 1.
 #define ADJUST_GAIN					0x1A
 
+//---- END -------------------------------------------------------
+
 //---- Reader registers ------------------------------------------
 
 // [W] - write only
@@ -119,16 +121,16 @@
 #define RF_REG_CHIP_STATE_CONTROL	0x00 // Chip Status Control
 #define RF_REG_ISO_CONTROL			0x01 // ISO Control
 
-#define ISO_14443B_OPTIONS			0x02 // ISO14443B TX options
-#define ISO_14443A_OPTIONS			0x03 // ISO14443A high bit rate options
-#define TX_TIMER_EPC_HIGH			0x04 // TX timer setting, H-byte
-#define TX_TIMER_EPC_LOW			0x05 // TX timer setting, L-byte
-#define TX_PULSE_LENGTH_CONTROL		0x06 // TX pulse-length control
-#define RX_NO_RESPONSE_WAIT_TIME	0x07 // RX no response wait time
-#define RX_WAIT_TIME				0x08 // RX wait time
-#define MODULATOR_CONTROL			0x09 // Modulator and SYS_CLK control
-#define RX_SPECIAL_SETTINGS			0x0A // RX Special Setting
-#define REGULATOR_CONTROL			0x0B // Regulator and I/O control
+#define TRF_REG_ISO_14443B_OPTIONS	0x02 // ISO14443B TX options
+#define TRF_REG_ISO_14443A_OPTIONS	0x03 // ISO14443A high bit rate options
+#define TRF_REG_TX_TIMER_EPC_HIGH			0x04 // TX timer setting, H-byte
+#define TRF_REG_TX_TIMER_EPC_LOW			0x05 // TX timer setting, L-byte
+#define TRF_REG_TX_PULSE_LENGTH_CONTROL		0x06 // TX pulse-length control
+#define TRF_REG_RX_NO_RESPONSE_WAIT_TIME	0x07 // RX no response wait time
+#define TRF_REG_RX_WAIT_TIME				0x08 // RX wait time
+#define TRF_REG_MODULATOR_CONTROL			0x09 // Modulator and SYS_CLK control
+#define TRF_REG_RX_SPECIAL_SETTINGS			0x0A // RX Special Setting
+#define TRF_REG_REGULATOR_CONTROL			0x0B // Regulator and I/O control
 
 #define TRF_REG_SPECIAL_1			0x10 // Special Function Register, Preset 0x00
 #define TRF_REG_SPECIAL_2			0x11 // Special Function Register, Preset 0x00
@@ -157,8 +159,11 @@
 #define TRF_REG_TX_LENGTH_BYTE_2	0x1E // Tx length byte 2
 #define TRF_REG_FIFO				0x1F // FIFO I/O register
 
+//---- END -------------------------------------------------------
 
-/// IRQ_BITS
+//---- IRQ -------------------------------------------------------
+
+/// IRQ_BITS TODO
 
 #define TRF_IRQ_NORESP	(1<<0) //Trigger for MCU to send next EOF/Slot Marker as defined by No Response Wait Time Register (0x07) (for ISO15693)
 #define TRF_IRQ_COL		(1<<1) //
@@ -169,23 +174,78 @@
 #define TRF_IRQ_RX		(1<<6)
 #define TRF_IRQ_TX		(1<<7)
 
-// Table 6-3. ISO Control Register (0x01)
+// Table 5-17. IRQ and Status Register (0x0C) for NFC and Card Emulation Operation
 
-//0 0 0 0 0 ISO15693 low bit rate, 6.62 kbps, one subcarrier, 1 out of 4
-//0 0 0 0 1 ISO15693 low bit rate, 6.62 kbps, one subcarrier, 1 out of 256
-//0 0 0 1 0 ISO15693 high bit rate, 26.48 kbps, one subcarrier, 1 out of 4 Default for reader
-//0 0 0 1 1 ISO15693 high bit rate, 26.48 kbps, one subcarrier, 1 out of 256
-//0 0 1 0 0 ISO15693 low bit rate, 6.67 kbps, double subcarrier, 1 out of 4
-//0 0 1 0 1 ISO15693 low bit rate, 6.67 kbps, double subcarrier, 1 out of 256
+#define TRF_IRQ_NFC_Tx_End							(1<<7)
+#define TRF_IRQ_NFC_Rx_Start						(1<<6)
+#define TRF_IRQ_NFC_FIFO_High						(1<<5)
+#define TRF_IRQ_NFC_Protocol_Error					(1<<4)
+#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
+#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
+#define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
+#define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
+
+//---- END -------------------------------------------------------
+
+//---- REGISTER SETTINGS -----------------------------------------
+
+// Table 6-2. Chip Status Control Register (0x00)
+//
+//
+
+//0 = Active Mode -> Active Mode (default)
+//1 = Standby Mode -> Standby mode keeps all supply regulators, 13.56-MHz SYS_CLK oscillator running. (typical start-up time to full operation 100 µs)
+#define TRF_CSR_STANDBY			(1<<7)
+
+//1 = Direct Mode 0 or 1 -> Provides user direct access to AFE (Direct Mode 0) or allows user to add their own framing (Direct Mode 1). Bit 6 of ISO Control register must be set by user before entering Direct Mode 0 or 1.
+//0 = Direct Mode 2 (default) -> Uses SPI or parallel communication with automatic framing and ISO decoders
+#define TRF_CSR_DIRECT			(1<<6)
+
+//1 = RF output active      Transmitter on, receivers on
+//0 = RF output not active  Transmitter off
+#define TRF_CSR_RF_ON 			(1<<5)
+
+//1 = half output power TX_OUT (pin 5) = 4-ohm output impedance P = 33 mW (+15 dBm) at 3.3 V
+//0 = full output power TX_OUT (pin 5) = 4-ohm output impedance P = 70 mW (+18 dBm) at 3.3 V
+#define TRF_CSR_HALFPOWER		(1<<4)
+
+//1 = selects Aux  RX input RX_IN2 input is used
+//0 = selects Main RX input RX_IN1 input is used
+#define TRF_CSR_RX_AUX 			(1<<3)
+
+//1 = AGC on  Enables AGC (AGC gain can be set in register 0x0A)
+//0 = AGC off AGC block is disabled
+#define TRF_CSR_AGC_ON 			(1<<2)
+
+//1 = Receiver activated for external field measurement. Forced enabling of receiver and TX oscillator. Used for external field measurement
+//0 = Automatic Enable Allows enable of the receiver by Bit 5 of this register (0x00)
+#define TRF_CSR_RECEIVER_ON 	(1<<1)
+
+//Selects the VIN voltage range
+//1 = 5 V operation
+//0 = 3 V operation
+#define TRF_CSR_5V 				(1<<0)
+
+
+
+// Table 6-3. ISO Control Register (0x01)
+//
+//
+
+//0 0 0 0 0 ISO15693 low bit rate,  6.62 kbps,  one subcarrier,    1 out of 4
+//0 0 0 0 1 ISO15693 low bit rate,  6.62 kbps,  one subcarrier,    1 out of 256
+//0 0 0 1 0 ISO15693 high bit rate, 26.48 kbps, one subcarrier,    1 out of 4 Default for reader
+//0 0 0 1 1 ISO15693 high bit rate, 26.48 kbps, one subcarrier,    1 out of 256
+//0 0 1 0 0 ISO15693 low bit rate,  6.67 kbps,  double subcarrier, 1 out of 4
+//0 0 1 0 1 ISO15693 low bit rate,  6.67 kbps,  double subcarrier, 1 out of 256
 //0 0 1 1 0 ISO15693 high bit rate, 26.69 kbps, double subcarrier, 1 out of 4
-//0 0 1 1 1 ISO15693 high bit rate, 26.69 kbps, double subcarrier,1 out of 256
+//0 0 1 1 1 ISO15693 high bit rate, 26.69 kbps, double subcarrier, 1 out of 256
 #define TRF_PROTOCOL_ISO15693 0
 #define TRF_PROTOCOL_ISO15693_Double_SubCarrier (1<<2)
 #define TRF_PROTOCOL_ISO15693_High_Bit_Rate 	(1<<1)
 #define TRF_PROTOCOL_ISO15693_1_out_of_256  	(1<<0)
 
-
-//0 1 0 0 0 ISO14443A RX bit rate, 106 kbps RX bit rate
+//0 1 0 0 0 ISO14443A RX      bit rate, 106 kbps RX bit rate
 //0 1 0 0 1 ISO14443A RX high bit rate, 212 kbps
 //0 1 0 1 0 ISO14443A RX high bit rate, 424 kbps
 //0 1 0 1 1 ISO14443A RX high bit rate, 848 kbps
@@ -194,7 +254,7 @@
 #define TRF_PROTOCOL_ISO14443A_424				(1<<1)
 #define TRF_PROTOCOL_ISO14443A_848				(1<<0)|(1<<1)
 
-//0 1 1 0 0 ISO14443B RX bit rate, 106 kbps RX bit rate
+//0 1 1 0 0 ISO14443B RX      bit rate, 106 kbps RX bit rate
 //0 1 1 0 1 ISO14443B RX high bit rate, 212 kbps
 //0 1 1 1 0 ISO14443B RX high bit rate, 424 kbps
 //0 1 1 1 1 ISO14443B RX high bit rate, 848 kbps
@@ -207,7 +267,6 @@
 //1 1 0 1 1 FeliCa 424 kbps
 #define TRF_PROTOCOL_FeliCa 		(1<<3)|(1<<4)|(1<<1)
 #define TRF_PROTOCOL_FeliCa_424 	(1<<0)
-
 
 //B7 rx_crc_n CRC Receive selection
 //0 = RX CRC (CRC is present in the response)
@@ -224,7 +283,6 @@
 //1 = NFC or Card Emulation Mode
 #define TRF_PROTOCOL_RFID			(1<<5)
 
-
 //ISO Control Register ISO_x Settings,
 //NFC Mode (B5 = 1, B2 = 0) or Card Emulation (B5 = 1, B2 = 1)
 //    NFC        CARD EMU
@@ -232,19 +290,26 @@
 //0 1 106 kbps   ISO14443B
 //1 0 212 kbps   N/A
 //1 1 424 kbps   N/A
-#define  TRF_PROTOCOL_NFC_MODE_106kbps 			1|(1<<5)
-#define  TRF_PROTOCOL_NFC_MODE_212kbps 			2|(1<<5)
-#define  TRF_PROTOCOL_NFC_MODE_424kbps 			3|(1<<5)
+#define  TRF_PROTOCOL_NFC_MODE_106kbps 			1|TRF_PROTOCOL_RFID
+#define  TRF_PROTOCOL_NFC_MODE_212kbps 			2|TRF_PROTOCOL_RFID
+#define  TRF_PROTOCOL_NFC_MODE_424kbps 			3|TRF_PROTOCOL_RFID
 
-#define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443A 	0|(1<<5)|(1<<2)
-#define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B 	1|(1<<5)|(1<<2)
-
-
-// Table 5-14. NFC Target Detection Level Register
-// TODO
+#define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443A 	0|TRF_PROTOCOL_RFID|(1<<2)
+#define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B 	1|TRF_PROTOCOL_RFID|(1<<2)
 
 
-#define TRF_NFC_Target_Detection_Extended_Range 	(1<<3)
+
+// Table 6-28. NFC Low Field Level Register (0x16)
+//
+//
+
+#define TRF_PROTOCOL_NFC_Low_Field_Level_Disable_Clock_Extractor (1<<7)
+
+
+// Table 5-14. NFC Target Detection Level Register (0x18)
+//
+//
+
 
 #define TRF_NFC_Target_Detection_Level_Not_Active 	0
 #define TRF_NFC_Target_Detection_Level_480mV		1
@@ -264,8 +329,16 @@
 #define TRF_NFC_Target_Detection_Level_320mV		6
 #define TRF_NFC_Target_Detection_Level_280mW		7
 
+#define TRF_NFC_Target_Detection_Extended_Range 	(1<<3)
 
-// Table 5-16. NFC Target Protocol Register
+#define TRF_NFC_Target_Detection_SDD_Enabled		(1<<5)
+
+#define TRF_NFC_Target_Detection_NFCID1_4			0
+#define TRF_NFC_Target_Detection_NFCID1_7			(1<<6)
+#define TRF_NFC_Target_Detection_NFCID1_10			(1<<7)
+
+
+// Table 5-16. NFC Target Protocol Register (0x19)
 #define TRF_NFC_Target_Protocol_RF_Level_wake   	(1<<7)
 #define TRF_NFC_Target_Protocol_RF_Level_collision	(1<<6)
 // bit 5 n/a
@@ -279,16 +352,6 @@
 #define TRF_NFC_Target_Protocol_212kbps				2
 #define TRF_NFC_Target_Protocol_424kbps				3
 
-// Table 5-17. IRQ and Status Register (0x0C) for NFC and Card Emulation Operation
-
-#define TRF_IRQ_NFC_Tx_End							(1<<7)
-#define TRF_IRQ_NFC_Rx_Start						(1<<6)
-#define TRF_IRQ_NFC_FIFO_High						(1<<5)
-#define TRF_IRQ_NFC_Protocol_Error					(1<<4)
-#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
-#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
-#define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
-#define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
 
 
 
@@ -298,18 +361,9 @@
 #define POWER_SETTING 0x06
 
 
-/// Chip Status Control Register (0x00)
-#define CSR_5V 				(1<<0)
-#define CSR_RECEIVER_ON 	(1<<1)
-#define CSR_AGC_ON 			(1<<2)
-#define CSR_RX_AUX 			(1<<3) //TODO: ??
-#define CSR_HALFPOWER		(1<<4)
-#define CSR_RF_ON 			(1<<5)
-#define CSR_DIRECT0v1		(1<<6)
-#define CSR_STANDBY			(1<<7)
-
-
 /// Modulator and SYS_CLK Control Register 0x09
+/// TODO:
+///
 #define MOD_ASK10	0
 #define MOD_OOK100  1
 #define MOD_ASK7	2

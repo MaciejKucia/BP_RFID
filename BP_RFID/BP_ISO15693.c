@@ -49,9 +49,9 @@ void BP_ISO15693_Inventory()
 
 	printf("%d bytes in FIFO\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
 
-	BP_RFID_Read_Registers(0x1F, BP_RFID_BUFFER, s);
+	BP_RFID_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
 
-	printf("%d bytes in FIFO\n", BP_RFID_Read_Register(TRF_REG_FIFO_CONTROL));
+	printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
 
 	printf("[RSSI:%d/7]\n", BP_RFID_TRF_Get_RSSI());
 
