@@ -12,3 +12,13 @@ void BP_RFID_NFC_Initialize_Mode()
 {
 
 }
+
+void BP_RFID_NFC_Collision_Avoidance()
+{}
+
+
+char BP_RFID_NFC_Send(char* data, char size)
+{
+	return 0;
+}
+

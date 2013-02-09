@@ -24,6 +24,11 @@
 
 #include "TRF797x.h"
 
+// TODO:
+// InitReader_DIRECT_MODE0
+// InitReader_DIRECT_MODE1
+// InitReader_DIRECT_MODE2
+
 /// Values present in TRF7970A after power on
 ///
 char DEFAULT_REG_POWERON[] =
@@ -90,26 +95,6 @@ void BP_RFID_Read_Registers(char adr, char* buffer, char size)
 #endif
 }
 
-
-// Soft commands
-/*#define IDLE						0x00
-#define SOFT_INIT					0x03
-#define INITIAL_RF_COLLISION		0x04
-#define RESPONSE_RF_COLLISION_N		0x05
-#define RESPONSE_RF_COLLISION_0		0x06
-#define	RESET						0x0F
-#define TRANSMIT_NO_CRC				0x10
-#define TRANSMIT_CRC				0x11
-#define DELAY_TRANSMIT_NO_CRC		0x12
-#define DELAY_TRANSMIT_CRC			0x13
-#define TRANSMIT_NEXT_SLOT			0x14
-#define CLOSE_SLOT_SEQUENCE			0x15
-#define STOP_DECODERS				0x16
-#define RUN_DECODERS				0x17
-#define CHECK_INTERNAL_RF			0x18
-#define CHECK_EXTERNAL_RF			0x19
-#define ADJUST_GAIN					0x1A*/
-
 void BP_RFID_TRF_Idle()
 {
 	BP_RFID_Write_Command(IDLE);
@@ -121,14 +106,38 @@ void BP_RFID_TRF_Software_Init()
 	BP_RFID_Write_Command(SOFT_INIT);
 }
 
+void BP_RFID_TRF_Adjust_Gain()
+{
+	BP_RFID_Write_Command(ADJUST_GAIN);
+}
+
+void BP_RFID_TRF_Check_RF()
+{
+	BP_RFID_Write_Command(CHECK_INTERNAL_RF);
+}
+
+void BP_RFID_TRF_Check_AUX_RF()
+{
+	BP_RFID_Write_Command(CHECK_EXTERNAL_RF);
+}
+
 void BP_RFID_TRF_IRQ_Clear()
 {
-	BP_RFID_Write_Register(IRQ_STATUS,0x00);
+	BP_RFID_Write_Register(IRQ_STATUS, 0x00);
 }
 
 void BP_RFID_TRF_Initial_RF_Collision()
 {
 	BP_RFID_Write_Command(INITIAL_RF_COLLISION);
+}
+
+void BP_RFID_TRF_Response_RF_Collision_N()
+{
+	BP_RFID_Write_Command(RESPONSE_RF_COLLISION_N);
+}
+void BP_RFID_TRF_Initial_RF_Collision_0()
+{
+	BP_RFID_Write_Command(RESPONSE_RF_COLLISION_0);
 }
 
 void BP_RFID_TRF_Run_Decoders()
@@ -146,13 +155,17 @@ void BP_RFID_TRF_Transmit_Next_Slot()
 	BP_RFID_Write_Command(TRANSMIT_NEXT_SLOT);
 }
 
+void BP_RFID_TRF_Transmit_Close_Slot_Sequence()
+{
+	BP_RFID_Write_Command(CLOSE_SLOT_SEQUENCE);
+}
+
 void BP_RFID_TRF_Turn_RF_Off()
 {
 	BP_RFID_LED1(LED_OFF);
 	// turn RF_ON bit off
 	char reg = BP_RFID_Read_Register(CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(CHIP_STATE_CONTROL,reg&~(CSR_RF_ON));
-
+	BP_RFID_Write_Register(CHIP_STATE_CONTROL, reg & ~(CSR_RF_ON));
 
 	// No RF no interrupts TODO: check
 	BP_RFID_TRF_IRQ_Clear();
@@ -163,7 +176,7 @@ void BP_RFID_TRF_Turn_RF_On()
 	BP_RFID_LED1(LED_BLINK_FAST);
 	// turn RF_ON bit on
 	char reg = BP_RFID_Read_Register(CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(CHIP_STATE_CONTROL,reg|(CSR_RF_ON));
+	BP_RFID_Write_Register(CHIP_STATE_CONTROL, reg | (CSR_RF_ON));
 }
 
 void BP_RFID_TRF_Modulator_Control(char control)
@@ -176,25 +189,27 @@ char BP_RFID_TRF_Get_ISO(void)
 	return BP_RFID_Read_Register(ISO_CONTROL);
 }
 
+// TODO: This needs fix for hardware bug in serial interface mode
 void BP_RFID_TRF_Set_ISO(char iso)
 {
-	BP_RFID_Write_Register(ISO_CONTROL,iso);
+	BP_RFID_Write_Register(ISO_CONTROL, iso);
 }
 
 char BP_RFID_TRF_Is_OSC_Stable(void)
 {
-	return (BP_RFID_Read_Register(RSSI_LEVELS)&(1<<6)?1:0);
+	return (BP_RFID_Read_Register(RSSI_LEVELS) & (1 << 6) ? 1 : 0);
 }
 
 
+/// Returns RSSI value 0-7 where 7 is max and 0 is min
 char BP_RFID_TRF_Get_RSSI(void)
 {
-	return (BP_RFID_Read_Register(RSSI_LEVELS)&0x07);
+	return (BP_RFID_Read_Register(RSSI_LEVELS) & 0x07);
 }
 
 char BP_RFID_TRF_Get_AUX_RSSI(void)
 {
-	return ((BP_RFID_Read_Register(RSSI_LEVELS)&0x38)>>3);
+	return ((BP_RFID_Read_Register(RSSI_LEVELS) & 0x38) >> 3);
 }
 
 void BP_RFID_TRF_FIFO_Reset(void)
@@ -204,14 +219,14 @@ void BP_RFID_TRF_FIFO_Reset(void)
 
 char BP_RFID_TRF_FIFO_How_Many_Bytes(void)
 {
-	return BP_RFID_Read_Register(FIFO_CONTROL)&0x7F;
+	return BP_RFID_Read_Register(FIFO_CONTROL) & 0x7F;
 }
 
 /// Is FIFO overflowed
 ///
 char BP_RFID_TRF_FIFO_Is_OVF(void)
 {
-	return (BP_RFID_Read_Register(FIFO_CONTROL)&(1<<7)?1:0);
+	return (BP_RFID_Read_Register(FIFO_CONTROL) & (1 << 7) ? 1 : 0);
 }
 
 //char BP_RFID_TRF_FIFO_Read_All(char * buff)
@@ -222,6 +237,51 @@ char BP_RFID_TRF_FIFO_Is_OVF(void)
 //
 //}
 
+//TODO
+void BP_RFID_TRF_Transmit_Delay_No_CRC()
+{
+	BP_RFID_Write_Command(DELAY_TRANSMIT_NO_CRC);
+}
+
+//TODO
+void BP_RFID_TRF_Transmit_Delay()
+{
+	BP_RFID_Write_Command(DELAY_TRANSMIT_CRC);
+}
+
+//TODO
+void BP_RFID_TRF_Transmit_No_CRC()
+{
+	BP_RFID_Write_Command(DELAY_TRANSMIT_NO_CRC);
+}
+
+///
+/// TODO: make it better, args maybe?
+void BP_RFID_TRF_Transmit(char *data, unsigned short size)
+{
+	short i;
+
+	// TODO:
+	if (size > 500)
+		return;
+
+	BP_RFID_TRF_FIFO_Reset();
+
+	// see Table 6-35. TX Length Byte2 Register (0x1E) 4 LSB bytes are for broken byte
+	//size = size << 4;
+
+	BP_RFID_BUFFER[0] = TRANSMIT_CRC | IS_COMMAND;
+	BP_RFID_BUFFER[1] = TX_LENGTH_BYTE_1 | CONTINOUS_MODE; // write byte count from 0x1D
+	BP_RFID_BUFFER[2] = (size & 0x0FF0) >> 4;
+	BP_RFID_BUFFER[3] = (size & 0x000F) << 4;
+
+	// now copy data (not efficient)
+	// this will be written to FIFO register 0x1F (increment mode)
+	for (i = 0; i < size; ++i)
+		BP_RFID_BUFFER[4 + i] = data[i];
+
+	BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(BP_RFID_BUFFER, size + 4);
+}
 
 // TODO: implement serial
 void BP_RFID_Init()
@@ -287,7 +347,6 @@ void BP_RFID_Init()
 					"[Warning! Default register setting mismatch @0x%X (%x != %x)]\n",
 					i, DEFAULT_REG_POWERON[i], BP_RFID_BUFFER[i]);
 
-
 	BP_RFID_TRF_Software_Init();
 	BP_RFID_TRF_Idle();
 	BP_RFID_TRF_Modulator_Control(MOD_OOK100);
@@ -345,8 +404,6 @@ void BP_RFID_Init()
 #endif
 }
 
-
-
 /// IRQ input handler
 ///
 // TODO: implement error handling
@@ -354,18 +411,26 @@ void IRQ_ISR(void)
 {
 	// read int register and clear it
 	char reg = BP_RFID_Read_Register(IRQ_STATUS);
-	BP_RFID_Write_Register(IRQ_STATUS,0x00);
+	BP_RFID_Write_Register(IRQ_STATUS, 0x00);
 
 	printf("[INTERRUPT:");
 
-	if (reg&IRQ_NORESP) printf("No response interrupt");
-	if (reg&IRQ_COL) printf("Collision error");
-	if (reg&IRQ_ERR3) printf("RX framing or EOF error");
-	if (reg&IRQ_ERR2) printf("RX parity error (ISO14443A)");
-	if (reg&IRQ_ERR1) printf("RX CRC Error");
-	if (reg&IRQ_FIFO) printf("FIFO is less than 4 (TX) or more than 8 (RX)");
-	if (reg&IRQ_RX) printf("IRQ Set due to end of RX");
-	if (reg&IRQ_TX) printf("IRQ Set due to end of TX");
+	if (reg & IRQ_NORESP)
+		printf("No response interrupt");
+	if (reg & IRQ_COL)
+		printf("Collision error");
+	if (reg & IRQ_ERR3)
+		printf("RX framing or EOF error");
+	if (reg & IRQ_ERR2)
+		printf("RX parity error (ISO14443A)");
+	if (reg & IRQ_ERR1)
+		printf("RX CRC Error");
+	if (reg & IRQ_FIFO)
+		printf("FIFO is less than 4 (TX) or more than 8 (RX)");
+	if (reg & IRQ_RX)
+		printf("IRQ Set due to end of RX");
+	if (reg & IRQ_TX)
+		printf("IRQ Set due to end of TX");
 
 	printf("]\n");
 
