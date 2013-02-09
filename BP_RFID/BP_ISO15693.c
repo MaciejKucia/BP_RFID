@@ -12,17 +12,16 @@
 //TODO: remove
 #include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
-
-
 #include "util/uartstdio.h"
+
 
 // TODO: multiple modes
 void BP_ISO15693_Init()
 {
-	printf("\[ISO15693 Initialized]\n");
+	printf("[ISO15693 Initialized]\n");
 	BP_RFID_TRF_Software_Init();
 	BP_RFID_TRF_Modulator_Control(MOD_OOK100);
-	BP_RFID_TRF_Set_ISO(ISO_PROTOCOL_2);
+	BP_RFID_TRF_Set_ISO(TRF_PROTOCOL_ISO15693 | TRF_PROTOCOL_ISO15693_High_Bit_Rate);
 }
 
 
@@ -32,7 +31,7 @@ void BP_ISO15693_Inventory()
 	char s;
 	char buf[8];
 
-	printf("\[ISO15693 Inventory:\n");
+	printf("[ISO15693 Inventory:\n");
 
 	//TODO: check for active mode
 
@@ -52,7 +51,7 @@ void BP_ISO15693_Inventory()
 
 	BP_RFID_Read_Registers(0x1F, BP_RFID_BUFFER, s);
 
-	printf("%d bytes in FIFO\n", BP_RFID_Read_Register(FIFO_CONTROL));
+	printf("%d bytes in FIFO\n", BP_RFID_Read_Register(TRF_REG_FIFO_CONTROL));
 
 	printf("[RSSI:%d/7]\n", BP_RFID_TRF_Get_RSSI());
 
