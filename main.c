@@ -103,6 +103,15 @@ int main(void)
 
 			break;
 
+		case 'N':
+			BP_RFID_NFC_Init();
+
+
+				BP_RFID_NFC_Collision_Avoidance();
+
+
+			break;
+
 		case '0':
 			BP_RFID_LED1(LED_BLINK_FAST);
 			break;

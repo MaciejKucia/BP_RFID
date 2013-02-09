@@ -135,6 +135,7 @@
 
 #define TRF_REG_FIFO_Levels			0x14 // Adjustable FIFO IRQ Levels Register
 //#define TRF_REG_RESERVED			0x15 // Reserved R/W
+
 #define TRF_REG_NFC_Low_Field		0x16 // NFC Low Field Detection Level
 #define TRF_REG_NFCID1_Number		0x17 // NFCID1 Number (up to 10 bytes wide) [W]
 #define TRF_REG_NFC_Target_Det_Lvl	0x18 // NFC Target Detection Level
@@ -221,7 +222,7 @@
 //B5 rfid RFID / Reserved
 //0 = RFID Mode
 //1 = NFC or Card Emulation Mode
-//#define TRF_PROTOCOL_RFID			(1<<5) <-- in TRF_PROTOCOL_NFC_MODE_
+#define TRF_PROTOCOL_RFID			(1<<5)
 
 
 //ISO Control Register ISO_x Settings,

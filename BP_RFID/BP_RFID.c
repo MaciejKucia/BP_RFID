@@ -189,10 +189,11 @@ char BP_RFID_TRF_Get_ISO(void)
 	return BP_RFID_Read_Register(RF_REG_ISO_CONTROL);
 }
 
+/// Returns 0 when non-rfid mode
+///
 char BP_RFID_TRF_Is_NFC(void)
 {
-	//TODO: !!!!!
-	return BP_RFID_Read_Register(RF_REG_ISO_CONTROL);
+	return BP_RFID_Read_Register(RF_REG_ISO_CONTROL)&TRF_PROTOCOL_RFID;
 }
 
 // TODO: This needs fix for hardware bug in serial interface mode
@@ -443,6 +444,7 @@ void IRQ_ISR(void)
 	}
 	else
 	{
+		printf("NFC:");
 		if (reg & TRF_IRQ_NFC_Tx_End)
 			printf("IRQ set due to end of TX");
 		if (reg & TRF_IRQ_NFC_Rx_Start)
