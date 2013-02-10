@@ -100,16 +100,15 @@ int main(void)
 
 			BP_ISO15693_Init();
 			BP_ISO15693_Inventory();
+			BP_ISO15693_Read_Single_Block(0);
+			BP_ISO15693_Get_System_Information(0);
+
 
 			break;
 
 		case 'N':
 			BP_RFID_NFC_Init();
-
-
-				BP_RFID_NFC_Collision_Avoidance();
-
-
+			BP_RFID_NFC_Collision_Avoidance();
 			break;
 
 		case '0':

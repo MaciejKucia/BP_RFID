@@ -83,7 +83,7 @@ void BP_RFID_Read_Registers(char,char*,char);
 
 void BP_RFID_Write_Register(char,char);
 
-
+void BP_RFID_Register_Callback(void (*)(char));
 
 void BP_RFID_TRF_FIFO_Reset(void);
 void BP_RFID_TRF_Turn_RF_On(void);
@@ -92,5 +92,9 @@ void BP_RFID_TRF_Modulator_Control(char);
 void BP_RFID_TRF_Transmit(char*, unsigned short);
 char BP_RFID_TRF_FIFO_How_Many_Bytes(void);
 char BP_RFID_TRF_Get_RSSI(void);
+void BP_RFID_TRF_Set_NFCID1(char,...);
+void BP_RFID_TRF_Stop_Decoders(void);
+void BP_RFID_TRF_Run_Decoders(void);
+
 
 #endif /* BP_HAL_H_ */

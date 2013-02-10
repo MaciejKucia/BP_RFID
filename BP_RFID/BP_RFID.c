@@ -24,6 +24,8 @@
 
 #include "TRF797x.h"
 
+#include <stdarg.h>
+
 // TODO:
 // InitReader_DIRECT_MODE0
 // InitReader_DIRECT_MODE1
@@ -34,6 +36,18 @@
 char DEFAULT_REG_POWERON[] =
 { 0x01, 0x21, 0x00, 0x00, 0xC1, 0xC1, 0x00, 0x0E, 0x07, 0x91, 0x10, 0x87, 0x00,
 		0x3E, 0x00, 0x40 };
+
+/// IRQ callback pointer
+///
+
+void (*IRQ_Callback)(char) = 0;
+
+/// Function registers new callback
+///
+void BP_RFID_Register_Callback(void (*function)(char))
+{
+	IRQ_Callback = function;
+}
 
 /// Main buffer
 ///
@@ -164,8 +178,8 @@ void BP_RFID_TRF_Turn_RF_Off()
 {
 	BP_RFID_LED1(LED_OFF);
 	// turn RF_ON bit off
-	char reg = BP_RFID_Read_Register(RF_REG_CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg & ~(TRF_CSR_RF_ON));
+	char reg = BP_RFID_Read_Register(TRF_REG_CHIP_STATE_CONTROL);
+	BP_RFID_Write_Register(TRF_REG_CHIP_STATE_CONTROL, reg & ~(TRF_CSR_RF_ON));
 
 	// No RF no interrupts TODO: check
 	BP_RFID_TRF_IRQ_Clear();
@@ -175,8 +189,8 @@ void BP_RFID_TRF_Turn_RF_On()
 {
 	BP_RFID_LED1(LED_BLINK_FAST);
 	// turn RF_ON bit on
-	char reg = BP_RFID_Read_Register(RF_REG_CHIP_STATE_CONTROL);
-	BP_RFID_Write_Register(RF_REG_CHIP_STATE_CONTROL, reg | (TRF_CSR_RF_ON));
+	char reg = BP_RFID_Read_Register(TRF_REG_CHIP_STATE_CONTROL);
+	BP_RFID_Write_Register(TRF_REG_CHIP_STATE_CONTROL, reg | (TRF_CSR_RF_ON));
 }
 
 void BP_RFID_TRF_Modulator_Control(char control)
@@ -186,20 +200,20 @@ void BP_RFID_TRF_Modulator_Control(char control)
 
 char BP_RFID_TRF_Get_ISO(void)
 {
-	return BP_RFID_Read_Register(RF_REG_ISO_CONTROL);
+	return BP_RFID_Read_Register(TRF_REG_ISO_CONTROL);
 }
 
 /// Returns 0 when non-rfid mode
 ///
 char BP_RFID_TRF_Is_NFC(void)
 {
-	return BP_RFID_Read_Register(RF_REG_ISO_CONTROL)&TRF_PROTOCOL_RFID;
+	return BP_RFID_Read_Register(TRF_REG_ISO_CONTROL) & TRF_PROTOCOL_RFID;
 }
 
 // TODO: This needs fix for hardware bug in serial interface mode
 void BP_RFID_TRF_Set_ISO(char iso)
 {
-	BP_RFID_Write_Register(RF_REG_ISO_CONTROL, iso);
+	BP_RFID_Write_Register(TRF_REG_ISO_CONTROL, iso);
 }
 
 char BP_RFID_TRF_Is_OSC_Stable(void)
@@ -259,6 +273,30 @@ void BP_RFID_TRF_Transmit_Delay()
 void BP_RFID_TRF_Transmit_No_CRC()
 {
 	BP_RFID_Write_Command(DELAY_TRANSMIT_NO_CRC);
+}
+
+/// Function Sets unique NFC ID number
+///
+void BP_RFID_TRF_Set_NFCID1(char size, ...)
+{
+	va_list vaArgP;
+	char i = 0;
+
+	if ((size != 4) && (size != 7) && (size != 10))
+	{
+		printf(
+				"BP_RFID_TRF_Set_NFCID1 Error: wrong argument! use size 4, 7 or 10");
+		return;
+	}
+
+	va_start(vaArgP, size);
+
+	BP_RFID_BUFFER[i] = TRF_REG_NFCID1_Number | CONTINOUS_MODE;
+	while (size--)
+		BP_RFID_BUFFER[++i] = va_arg(vaArgP, char);
+	BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(BP_RFID_BUFFER, i);
+
+	va_end(vaArgP);
 }
 
 ///
@@ -417,81 +455,17 @@ void BP_RFID_Init()
 /// TODO: Implement callback
 void IRQ_ISR(void)
 {
-	char c;
-	int i;
-	char s;
-
 	// read int register and clear it
 	char reg = BP_RFID_Read_Register(TRF_REG_IRQ_STATUS);
 	BP_RFID_Write_Register(TRF_REG_IRQ_STATUS, 0x00);
 
 	printf("[INTERRUPT:");
 
-	if (!BP_RFID_TRF_Is_NFC())
-	{
-		if (reg & TRF_IRQ_NORESP)
-			printf("No response interrupt");
-		if (reg & TRF_IRQ_COL)
-			printf("Collision error");
-		if (reg & TRF_IRQ_ERR3)
-			printf("RX framing or EOF error");
-		if (reg & TRF_IRQ_ERR2)
-			printf("RX parity error (ISO14443A)");
-		if (reg & TRF_IRQ_ERR1)
-			printf("RX CRC Error");
-		if (reg & TRF_IRQ_FIFO)
-			printf("FIFO is less than 4 (TX) or more than 8 (RX)");
-		if (reg & TRF_IRQ_RX)
-			printf("IRQ Set due to end of RX");
-		if (reg & TRF_IRQ_TX)
-			printf("IRQ Set due to end of TX");
-	}
-	else
-	{
-		printf("NFC:");
-		if (reg & TRF_IRQ_NFC_Tx_End)
-			printf("IRQ set due to end of TX");
-		if (reg & TRF_IRQ_NFC_Rx_Start)
-		{
-			printf("IRQ set due to RX start");
+	if(IRQ_Callback!=0)
+		IRQ_Callback(reg);
 
-			printf("%d bytes in FIFO\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
-			BP_RFID_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
-			printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
-			for (i = 0; i < s; ++i)	printf("(%x)", BP_RFID_BUFFER[i]);
-			BP_RFID_TRF_FIFO_Reset();
-		}
-
-		if (reg & TRF_IRQ_NFC_FIFO_High)
-			printf("Signals the FIFO is 1/3 > FIFO > 2/3");
-		if (reg & TRF_IRQ_NFC_Protocol_Error)
-			printf("Protocol error");
-		if (reg & TRF_IRQ_NFC_SDD_Finished)
-			printf("SDD finished");
-		if (reg & TRF_IRQ_NFC_RF_Field_Change)
-		{
-			printf("RF field change");
-
-			c = BP_RFID_Read_Register(TRF_REG_NFC_Target_Det_Lvl);
-			c &= ~(TRF_NFC_Target_Detection_SDD_Enabled);
-			BP_RFID_Write_Register(TRF_REG_NFC_Target_Det_Lvl,c);
-
-
-
-		}
-		if (reg & TRF_IRQ_NFC_Col_Avoid_Finished)
-			printf("RF collision avoidance finished");
-		if (reg & TRF_IRQ_NFC_Col_Avoid_Failed)
-			printf("RF collision avoidance not finished successfully");
-	}
 
 	printf("]\n");
 
 	GPIOPinIntClear(GPIO_PORTE_BASE, IRQ_PIN);
-}
-
-// NFC handled differently
-void IRQ_ISR_NFC(void)
-{
-
 }

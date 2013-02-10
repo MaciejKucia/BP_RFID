@@ -118,11 +118,11 @@
 // [W] - write only
 // [R] - read only
 
-#define RF_REG_CHIP_STATE_CONTROL	0x00 // Chip Status Control
-#define RF_REG_ISO_CONTROL			0x01 // ISO Control
+#define TRF_REG_CHIP_STATE_CONTROL			0x00 // Chip Status Control
+#define TRF_REG_ISO_CONTROL					0x01 // ISO Control
 
-#define TRF_REG_ISO_14443B_OPTIONS	0x02 // ISO14443B TX options
-#define TRF_REG_ISO_14443A_OPTIONS	0x03 // ISO14443A high bit rate options
+#define TRF_REG_ISO_14443B_OPTIONS			0x02 // ISO14443B TX options
+#define TRF_REG_ISO_14443A_OPTIONS			0x03 // ISO14443A high bit rate options
 #define TRF_REG_TX_TIMER_EPC_HIGH			0x04 // TX timer setting, H-byte
 #define TRF_REG_TX_TIMER_EPC_LOW			0x05 // TX timer setting, L-byte
 #define TRF_REG_TX_PULSE_LENGTH_CONTROL		0x06 // TX pulse-length control
@@ -132,32 +132,32 @@
 #define TRF_REG_RX_SPECIAL_SETTINGS			0x0A // RX Special Setting
 #define TRF_REG_REGULATOR_CONTROL			0x0B // Regulator and I/O control
 
-#define TRF_REG_SPECIAL_1			0x10 // Special Function Register, Preset 0x00
-#define TRF_REG_SPECIAL_2			0x11 // Special Function Register, Preset 0x00
+#define TRF_REG_SPECIAL_1					0x10 // Special Function Register, Preset 0x00
+#define TRF_REG_SPECIAL_2					0x11 // Special Function Register, Preset 0x00
 
-#define TRF_REG_FIFO_Levels			0x14 // Adjustable FIFO IRQ Levels Register
-//#define TRF_REG_RESERVED			0x15 // Reserved R/W
+#define TRF_REG_FIFO_Levels					0x14 // Adjustable FIFO IRQ Levels Register
+//#define TRF_REG_RESERVED					0x15 // Reserved R/W
 
-#define TRF_REG_NFC_Low_Field		0x16 // NFC Low Field Detection Level
-#define TRF_REG_NFCID1_Number		0x17 // NFCID1 Number (up to 10 bytes wide) [W]
-#define TRF_REG_NFC_Target_Det_Lvl	0x18 // NFC Target Detection Level
-#define TRF_REG_NFC_Target_Protocol	0x19 // NFC Target Protocol
+#define TRF_REG_NFC_Low_Field				0x16 // NFC Low Field Detection Level
+#define TRF_REG_NFCID1_Number				0x17 // NFCID1 Number (up to 10 bytes wide) [W]
+#define TRF_REG_NFC_Target_Det_Lvl			0x18 // NFC Target Detection Level
+#define TRF_REG_NFC_Target_Protocol			0x19 // NFC Target Protocol
 
-#define TRF_REG_IRQ_STATUS			0x0C // IRQ Status Register
-#define TRF_REG_IRQ_MASK			0x0D // Collision Position and Interrupt Mask Register
-#define	TRF_REG_COLLISION_POSITION	0x0E // Collision position [R]
-#define TRF_REG_RSSI_LEVELS			0x0F // RSSI levels and oscillator status [R]
+#define TRF_REG_IRQ_STATUS					0x0C // IRQ Status Register
+#define TRF_REG_IRQ_MASK					0x0D // Collision Position and Interrupt Mask Register
+#define	TRF_REG_COLLISION_POSITION			0x0E // Collision position [R]
+#define TRF_REG_RSSI_LEVELS					0x0F // RSSI levels and oscillator status [R]
 
-#define TRF_REG_RAM_1				0x12 //
-#define TRF_REG_RAM_2				0x13 // RAM
+#define TRF_REG_RAM_1						0x12 //
+#define TRF_REG_RAM_2						0x13 // RAM
 
-#define TRF_REG_TEST_SETTINGS_1		0x1A //
-#define TRF_REG_TEST_SETTINGS_2		0x1B // Test Register
+#define TRF_REG_TEST_SETTINGS_1				0x1A //
+#define TRF_REG_TEST_SETTINGS_2				0x1B // Test Register
 
-#define TRF_REG_FIFO_CONTROL		0x1C // FIFO status
-#define TRF_REG_TX_LENGTH_BYTE_1	0x1D // Tx length byte 1
-#define TRF_REG_TX_LENGTH_BYTE_2	0x1E // Tx length byte 2
-#define TRF_REG_FIFO				0x1F // FIFO I/O register
+#define TRF_REG_FIFO_CONTROL				0x1C // FIFO status
+#define TRF_REG_TX_LENGTH_BYTE_1			0x1D // Tx length byte 1
+#define TRF_REG_TX_LENGTH_BYTE_2			0x1E // Tx length byte 2
+#define TRF_REG_FIFO						0x1F // FIFO I/O register
 
 //---- END -------------------------------------------------------
 
@@ -180,8 +180,8 @@
 #define TRF_IRQ_NFC_Rx_Start						(1<<6)
 #define TRF_IRQ_NFC_FIFO_High						(1<<5)
 #define TRF_IRQ_NFC_Protocol_Error					(1<<4)
-#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
-#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
+#define TRF_IRQ_NFC_SDD_Finished					(1<<3) //8
+#define TRF_IRQ_NFC_RF_Field_Change					(1<<2) //4
 #define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
 #define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
 
@@ -297,13 +297,91 @@
 #define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443A 	0|TRF_PROTOCOL_RFID|(1<<2)
 #define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B 	1|TRF_PROTOCOL_RFID|(1<<2)
 
+// Table 6-6. ISO14443B TX Options Register (0x02)
+//
+//
 
+// Three bit code defines the number of etu (0-7) which separate two characters. ISO14443B TX only
+//
+// TX EGT time select MSB TODO:??
+#define TRF_ISO14443B_TX_Time2 (1<<7)
+// TX EGT time select
+#define TRF_ISO14443B_TX_Time1 (1<<6)
+// TX EGT time select LSB
+#define TRF_ISO14443B_TX_Time0 (1<<5)
+
+// ISO14443B TX only
+//
+//1 = EOF-> 0 length 11 etu
+//0 = EOF-> 0 length 10 etu
+#define TRF_ISO14443B_TX_EOF0_L11 (1<<4)
+//1 = SOF-> 1 length 03 etu
+//0 = SOF-> 1 length 02 etu
+#define TRF_ISO14443B_TX_SOF1_L03 (1<<3)
+//1 = SOF-> 0 length 11 etu
+//0 = SOF-> 0 length 10 etu
+#define TRF_ISO14443B_TX_SOF0_L11 (1<<2)
+//1 = EGT after each byte
+//0 = EGT after last byte is omitted
+#define TRF_ISO14443B_TX_EGT (1<<1)
+
+// For use with Auto SDD configuration, makes B6 in ISO14443A response 1 or 0, indicating Layer 4 compliance (or not), for all other cases, this bit is unused
+// Auto SDD_SAK
+// 1 = ISO14443A Layer 4 compliant (in SAK response)
+// 0 = Not Layer 4 compliant (in SAK response)
+#define TRF_ISO14443B_TX_Auto_SDD_SAK (1<<0)
+
+
+
+// Table 6-14. RX Special Setting Register (Address 0x0A)
+//
+//
+
+//B7 C212 Bandpass 110 kHz to 570 kHz Appropriate for 212-kHz subcarrier system (FeliCa)
+#define TRF_NFC_RX_SPEC_FeliCa 				(1<<7)
+
+//B6 C424 Bandpass 200 kHz to 900 kHz Appropriate for 424-kHz subcarrier used in ISO15693
+#define TRF_NFC_RX_SPEC_ISO15693			(1<<6)
+
+//Appropriate for Manchester-coded 848-kHz subcarrier used in ISO14443A
+#define TRF_NFC_RX_SPEC_ISO14443			(1<<5)
+
+//B5 M848 Bandpass 450 kHz to 1.5 MHz Gain reduced for 18 dB  Appropriate for highest bit rate (848 kbps) used in high-bit-rate ISO14443
+#define TRF_NFC_RX_SPEC_848kbps_ISO14443	(1<<4)
+
+// AGC activation level changed from five times the digitizing level to three times the digitizing level.
+// AGC activation level change:
+//  1 = 3x
+//  0 = 5x
+#define TRF_NFC_RX_SPEC_AGC3x				(1<<1)
+
+// AGC action can be done any time during receive process. It is not limited to the start of receive ("max hold").
+// AGC action is not limited in time:
+//  1 = continuously – no time limit
+//  0 = 8 subcarrier pulses
+#define TRF_NFC_RX_SPEC_AGC_Action			(1<<0)
+
+#define TRF_NFC_RX_SPEC_Gain_Reduction_0dB	(0<<2) //Gain reduction
+#define TRF_NFC_RX_SPEC_Gain_Reduction_5dB  (1<<2) //
+#define TRF_NFC_RX_SPEC_Gain_Reduction_10dB (2<<2) //
+#define TRF_NFC_RX_SPEC_Gain_Reduction_15dB (3<<2) //Sets the RX gain reduction, and reduces sensitivity
 
 // Table 6-28. NFC Low Field Level Register (0x16)
 //
 //
 
-#define TRF_PROTOCOL_NFC_Low_Field_Level_Disable_Clock_Extractor (1<<7)
+// NFC passive 106-kbps and ISO14443A card emulation
+#define TRF_NFC_Field_Detection_Disable_Clock_Extractor (1<<7)
+
+#define TRF_NFC_Field_Detection_Level_Not_Active 	0
+#define TRF_NFC_Field_Detection_Level_480mV			1
+#define TRF_NFC_Field_Detection_Level_350mV			2
+#define TRF_NFC_Field_Detection_Level_250mV			3
+#define TRF_NFC_Field_Detection_Level_220mV			4
+#define TRF_NFC_Field_Detection_Level_190mV			5
+#define TRF_NFC_Field_Detection_Level_180mV			6
+#define TRF_NFC_Field_Detection_Level_170mW			7
+
 
 
 // Table 5-14. NFC Target Detection Level Register (0x18)
@@ -339,18 +417,18 @@
 
 
 // Table 5-16. NFC Target Protocol Register (0x19)
-#define TRF_NFC_Target_Protocol_RF_Level_wake   	(1<<7)
-#define TRF_NFC_Target_Protocol_RF_Level_collision	(1<<6)
+#define TRF_NFC_Target_Protocol_RF_Level_wake   	(1<<7) //80
+#define TRF_NFC_Target_Protocol_RF_Level_collision	(1<<6) //40
 // bit 5 n/a
-#define TRF_NFC_Target_Protocol_FeliCa				(1<<4)
-#define TRF_NFC_Target_Protocol_PassiveOrTag		(1<<3)
+#define TRF_NFC_Target_Protocol_FeliCa				(1<<4) //10
+#define TRF_NFC_Target_Protocol_PassiveOrTag		(1<<3) //08
 
-#define TRF_NFC_Target_Protocol_ISO14443B			(1<<2)
+#define TRF_NFC_Target_Protocol_ISO14443B			(1<<2) //04
 
 //Bit rate of first received command
-#define TRF_NFC_Target_Protocol_106kbps				1
-#define TRF_NFC_Target_Protocol_212kbps				2
-#define TRF_NFC_Target_Protocol_424kbps				3
+#define TRF_NFC_Target_Protocol_106kbps				1	  //01
+#define TRF_NFC_Target_Protocol_212kbps				2     //02
+#define TRF_NFC_Target_Protocol_424kbps				3     //03
 
 
 
