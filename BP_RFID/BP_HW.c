@@ -1,5 +1,5 @@
 /*
- * BP_RFID_HAL.c
+ * BP_RFID_HW.c
  *
  *  Created on: Jan 30, 2013
  *      Author: x0184343
@@ -26,9 +26,11 @@
 
 #include "util/uartstdio.h"
 
-#include "BP_RFID.h"
+#include "BP_RFID_TRF.h"
 
-// TODO: Determine Delays in pin bit-banging
+// Recommended DATA_CLK is 2 [MHz]
+// 2 MHz = period of 0.5 [us] approx 1 [us]
+#define BP_RFID_HW_PERIOD 1
 
 /// Booster Pack LED ///
 ///
@@ -45,7 +47,7 @@ unsigned char LEDS_FLAGS = 0;
 
 /// Set mode for LED1
 ///
-void BP_RFID_LED1(char mode)
+void BP_RFID_HW_LED1(char mode)
 {
 	switch (mode)
 	{
@@ -59,7 +61,9 @@ void BP_RFID_LED1(char mode)
 		break;
 	case LED_TOGGLE:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED1_PIN,
 				~GPIOPinRead(GPIO_PORTA_BASE, LED1_PIN));
 		break;
 	case LED_BLINK_FAST:
@@ -72,8 +76,8 @@ void BP_RFID_LED1(char mode)
 }
 
 /// Set mode for LED2
-/// TODO: update definitions
-void BP_RFID_LED2(char mode)
+///
+void BP_RFID_HW_LED2(char mode)
 {
 	switch (mode)
 	{
@@ -87,7 +91,9 @@ void BP_RFID_LED2(char mode)
 		break;
 	case LED_TOGGLE:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED2_PIN,
 				~GPIOPinRead(GPIO_PORTA_BASE, LED2_PIN));
 		break;
 	case LED_BLINK_FAST:
@@ -101,27 +107,35 @@ void BP_RFID_LED2(char mode)
 
 /// Set leds during sys tick update
 ///
-void BP_RFID_LEDS_UPDATE(unsigned long SysTickCounter)
+void BP_RFID_HW_LEDS_UPDATE(unsigned long SysTickCounter)
 {
 	if ((LEDS_FLAGS & 0x0F) == 0x0A)
 	{
-		GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED1_PIN,
 				((SysTickCounter % 100) > 25) ? LED1_PIN : 0);
 	}
 	else if ((LEDS_FLAGS & 0x0F) == 0x0B)
 	{
-		GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED1_PIN,
 				((SysTickCounter % 500) > 250) ? LED1_PIN : 0);
 	}
 
 	if ((LEDS_FLAGS & 0xF0) == 0xA0)
 	{
-		GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED2_PIN,
 				((SysTickCounter % 100) > 25) ? LED2_PIN : 0);
 	}
 	else if ((LEDS_FLAGS & 0xF0) == 0xB0)
 	{
-		GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN,
+		GPIOPinWrite(
+				GPIO_PORTA_BASE,
+				LED2_PIN,
 				((SysTickCounter % 500) > 250) ? LED2_PIN : 0);
 	}
 }
@@ -142,18 +156,18 @@ void BP_RFID_HW_DISABLE()
 
 /// Set clock high
 ///
-inline void DATA_CLK_HIGH(void)
+inline void BP_RFID_HW_DATA_CLK_HIGH(void)
 {
 	GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, DATA_CLK_PIN);
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Set clock low
 ///
-inline void DATA_CLK_LOW()
+inline void BP_RFID_HW_DATA_CLK_LOW()
 {
 	GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, 0);
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Put bits on data bus
@@ -227,41 +241,38 @@ char BP_RFID_HW_PARALLEL_GET()
 }
 
 /// Send start condition on parallel line
-/// TODO: determine delay
 void BP_RFID_HW_PARALLEL_START()
 {
 	BP_RFID_HW_PARALLEL_PUT(0x00);
-	DATA_CLK_HIGH();
-	SysCtlDelay(500);
+	BP_RFID_HW_DATA_CLK_HIGH();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0xFF);
-	SysCtlDelay(500);
-	DATA_CLK_LOW();
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
+	BP_RFID_HW_DATA_CLK_LOW();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
 }
 
 /// Send stop condition
-/// TODO: determine delay
 void BP_RFID_HW_PARALLEL_STOP()
 {
 	BP_RFID_HW_PARALLEL_PUT(0xFF);
-	SysCtlDelay(500);
-	DATA_CLK_HIGH();
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
+	BP_RFID_HW_DATA_CLK_HIGH();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
-	SysCtlDelay(500);
-	DATA_CLK_LOW();
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
+	BP_RFID_HW_DATA_CLK_LOW();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Send stop while in multiple mode
-/// TODO: determine delay
 void BP_RFID_HW_PARALLEL_STOP_MULTIPLE()
 {
 	BP_RFID_HW_PARALLEL_PUT(0x80);
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
-	SysCtlDelay(500);
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Write data to register
@@ -270,8 +281,9 @@ void BP_RFID_HW_WRITE_PARALLEL(char adr, char data, char command)
 {
 	// step1 address + non continous [0] + write bit [0] + address mode [0]
 	char adrcmd = (adr & 0x1F);
-	if (command) adrcmd |= 0x80;
+	if (command) adrcmd |= IS_COMMAND;
 
+	// DEBUG
 	//printf ("[ %x < %x ]",adrcmd,data);
 
 	// start condition
@@ -280,14 +292,14 @@ void BP_RFID_HW_WRITE_PARALLEL(char adr, char data, char command)
 	// put address on bus
 	BP_RFID_HW_PARALLEL_PUT(adrcmd);
 
-	DATA_CLK_HIGH();
-	DATA_CLK_LOW();
+	BP_RFID_HW_DATA_CLK_HIGH();
+	BP_RFID_HW_DATA_CLK_LOW();
 
-	if(!command)
+	if (!command)
 	{
 		BP_RFID_HW_PARALLEL_PUT(data);
-		DATA_CLK_HIGH();
-		DATA_CLK_LOW();
+		BP_RFID_HW_DATA_CLK_HIGH();
+		BP_RFID_HW_DATA_CLK_LOW();
 	}
 
 	BP_RFID_HW_PARALLEL_STOP();
@@ -299,18 +311,20 @@ void BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(char* data, char size)
 {
 	int i;
 
+	// debug
 	//printf ("[WM(%x)>",size);
 
 	// start condition
 	BP_RFID_HW_PARALLEL_START();
 
-	for (i=0; i<size;++i)
+	for (i = 0; i < size; ++i)
 	{
 		// put data
 		BP_RFID_HW_PARALLEL_PUT(data[i]);
+		// debug
 		//printf("{%x}",data[i]);
-		DATA_CLK_HIGH();
-		DATA_CLK_LOW();
+		BP_RFID_HW_DATA_CLK_HIGH();
+		BP_RFID_HW_DATA_CLK_LOW();
 	}
 
 	//printf("]");
@@ -323,7 +337,7 @@ void BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(char* data, char size)
 char BP_RFID_HW_READ_PARALLEL(char adr)
 {
 	// step1 address + non continous [0] + read bit [1] + address mode [0]
-	char adrcmd = (adr & 0x1F) | (1<<6);
+	char adrcmd = (adr & 0x1F) | DO_READ;
 
 	// start condition
 	BP_RFID_HW_PARALLEL_START();
@@ -331,18 +345,18 @@ char BP_RFID_HW_READ_PARALLEL(char adr)
 	// put address on bus
 	BP_RFID_HW_PARALLEL_PUT(adrcmd);
 
-	DATA_CLK_HIGH();
-	DATA_CLK_LOW();
+	BP_RFID_HW_DATA_CLK_HIGH();
+	BP_RFID_HW_DATA_CLK_LOW();
 
 	BP_RFID_HW_PARALEL_SET_INPUT();
 	BP_RFID_HW_PARALLEL_PUT(0);
 
-	DATA_CLK_HIGH();
-	SysCtlDelay(500);
+	BP_RFID_HW_DATA_CLK_HIGH();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
 	//printf ("[r %x > %x]",(adr & 0x1F) | (1 << 6),
 	adrcmd = BP_RFID_HW_PARALLEL_GET();
-	SysCtlDelay(500);
-	DATA_CLK_LOW();
+	SysCtlDelay(BP_RFID_HW_PERIOD);
+	BP_RFID_HW_DATA_CLK_LOW();
 
 	BP_RFID_HW_PARALEL_SET_OUTPUT();
 
@@ -357,7 +371,7 @@ void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char adr, char* buffer, char size)
 {
 	int i;
 	// step1 address + continous [1] + read bit [1] + address mode [0]
-	char adrcmd = (adr & 0x1F) | (1<<5) |(1<<6);
+	char adrcmd = (adr & 0x1F) | CONTINOUS_MODE | DO_READ;
 
 	//printf("[R (%x) %x <!!]",size,adrcmd);
 
@@ -368,19 +382,19 @@ void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char adr, char* buffer, char size)
 	BP_RFID_HW_PARALLEL_PUT(adrcmd);
 
 	//clock high
-	DATA_CLK_HIGH();
-	DATA_CLK_LOW();
+	BP_RFID_HW_DATA_CLK_HIGH();
+	BP_RFID_HW_DATA_CLK_LOW();
 
 	BP_RFID_HW_PARALEL_SET_INPUT();
 	BP_RFID_HW_PARALLEL_PUT(0);
 
-	for(i=0;i<size;++i)
+	for (i = 0; i < size; ++i)
 	{
-		DATA_CLK_HIGH();
-		SysCtlDelay(5000);
+		BP_RFID_HW_DATA_CLK_HIGH();
+		SysCtlDelay(BP_RFID_HW_PERIOD);
 		buffer[i] = BP_RFID_HW_PARALLEL_GET();
-		SysCtlDelay(5000);
-		DATA_CLK_LOW();
+		SysCtlDelay(BP_RFID_HW_PERIOD);
+		BP_RFID_HW_DATA_CLK_LOW();
 	}
 
 	BP_RFID_HW_PARALEL_SET_OUTPUT();

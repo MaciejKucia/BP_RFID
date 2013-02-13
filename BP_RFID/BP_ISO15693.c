@@ -5,7 +5,7 @@
  *      Author: Maciej
  */
 
-#include "BP_RFID.h"
+#include "BP_RFID_TRF.h"
 #include "TRF797x.h"
 #include "util/uartstdio.h"
 
@@ -26,9 +26,11 @@ char UID[8];
 void BP_ISO15693_Init()
 {
 	printf("[ISO15693 Initialized]\n");
-	BP_RFID_Register_Callback(BP_ISO15693_IRQ);
+
+	BP_RFID_Set_IRQ_Callback(BP_ISO15693_IRQ);
+
 	BP_RFID_TRF_Software_Init();
-	BP_RFID_TRF_Modulator_Control(MOD_OOK100);
+	BP_RFID_TRF_Modulator_Control(TRF_MOD_OOK100);
 	BP_RFID_TRF_Set_ISO(
 			TRF_PROTOCOL_ISO15693 | TRF_PROTOCOL_ISO15693_High_Bit_Rate);
 }
@@ -51,21 +53,22 @@ void BP_ISO15693_Inventory()
 
 	// This will be transmitted
 
-	buf[0] = ISO15693_FL0_Data_rate_flag | ISO15693_FL0_Inventory_flag|ISO15693_FL2_Nb_slots_flag;	//Flags
-	buf[1] = ISO15693_CMD_Inventory;																//Command
-	buf[2] = 0x00; 																					//ISO mask length
+	buf[0] = ISO15693_FL0_Data_rate_flag | ISO15693_FL0_Inventory_flag | ISO15693_FL2_Nb_slots_flag;//Flags
+	buf[1] = ISO15693_CMD_Inventory;								//Command
+	buf[2] = 0x00; 											//ISO mask length
 
 	BP_RFID_TRF_Transmit(buf, 3);
 
 	// Wait for transmit
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+	BP_ISO15693_Interrupt = 0;
 
 	// Wait for receive
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+
+	BP_ISO15693_Interrupt = 0;
 
 	printf("ID:");
 
@@ -84,38 +87,40 @@ void BP_ISO15693_Read_Single_Block(char addr)
 	BP_ISO15693_Interrupt = 0;
 
 	//TODO: Anticollision n inventory
-	UID[0] = 0xe0 ;
-	UID[1] = 0x07 ;
-	UID[2] = 0x80 ;
-	UID[3] = 0x40 ;
-	UID[4] = 0x06 ;
-	UID[5] = 0x57 ;
-	UID[6] = 0x64 ;
-	UID[7] = 0x3e ;
+	UID[0] = 0xe0;
+	UID[1] = 0x07;
+	UID[2] = 0x80;
+	UID[3] = 0x40;
+	UID[4] = 0x06;
+	UID[5] = 0x57;
+	UID[6] = 0x64;
+	UID[7] = 0x3e;
 
 	printf("\n\n[ISO15693 Read:\n");
 
 	//TODO: check for active mode
 
-	//BP_RFID_TRF_Turn_RF_On();
+	BP_RFID_TRF_Turn_RF_On();
 	BP_RFID_TRF_FIFO_Reset();
 
 	// This will be transmitted
-	buf[0] = ISO15693_FL0_Inventory_flag | ISO15693_FL1_Option_flag;	  //flags
+
+										//ISO mask length
+	buf[0] = 0;	 //flags
 	buf[1] = ISO15693_CMD_Read_Single_Block;  //command
-	buf[2] = 0x05;								  //block
+	buf[2] = addr;								  //block
 
 	BP_RFID_TRF_Transmit(buf, 3);
 
 	// Wait for transmit
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+	BP_ISO15693_Interrupt = 0;
 
 	// Wait for receive
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+	BP_ISO15693_Interrupt = 0;
 
 	for (i = 0; i < 20; ++i)
 		printf("(%x)", BP_RFID_BUFFER[i]);
@@ -146,12 +151,12 @@ void BP_ISO15693_Get_System_Information(char addr)
 	// Wait for transmit
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+	BP_ISO15693_Interrupt = 0;
 
 	// Wait for receive
 	while (!BP_ISO15693_Interrupt)
 		;
-	BP_ISO15693_Interrupt=0;
+	BP_ISO15693_Interrupt = 0;
 
 	for (i = 0; i < 15; ++i)
 		printf("(%x)", BP_RFID_BUFFER[i]);
@@ -167,15 +172,16 @@ void BP_ISO15693_IRQ(char reg)
 	if (reg & TRF_IRQ_ERR1) printf("RX CRC Error");
 	if (reg & TRF_IRQ_FIFO)
 		printf("FIFO is less than 4 (TX) or more than 8 (RX)");
+
 	if (reg & TRF_IRQ_RX)
 	{
 		printf("IRQ Set due to end of RX");
 		printf(", RSSI:%d/7]", BP_RFID_TRF_Get_RSSI());
 		printf("(%d bytes)", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
 
-		BP_RFID_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
+		BP_RFID_TRF_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
 
-	//	BP_RFID_TRF_Turn_RF_Off();
+		//	BP_RFID_TRF_Turn_RF_Off();
 
 		if (BP_RFID_BUFFER[0] != 0) switch (BP_RFID_BUFFER[1])
 		{
@@ -210,6 +216,7 @@ void BP_ISO15693_IRQ(char reg)
 				printf("[ISO15693_RES_Lock_Kill_Unsuccessful]");
 				break;
 			}
+
 		BP_RFID_TRF_FIFO_Reset();
 	}
 	if (reg & TRF_IRQ_TX) printf("IRQ Set due to end of TX");

@@ -12,7 +12,7 @@
 ///
 #define BP_RFID_PARALLEL
 //#define BP_RFID_SERIAL
-//#define BP_RFID_SERIAL_NOSS
+//#define BP_RFID_SERIAL_NO_SS
 
 /// led states
 ///
@@ -24,9 +24,9 @@
 
 /// Hardware interfacing
 // TODO: check if this is needed
-#define IS_COMMAND 	0x80
-#define DO_READ 	(1<<6)
-#define CONTINOUS_MODE (1<<5)
+#define IS_COMMAND 			(0x80)
+#define DO_READ 			(1<<6)
+#define CONTINOUS_MODE 		(1<<5)
 
 /// PIN DEFINITIONS
 ///
@@ -59,32 +59,26 @@ extern char BP_RFID_BUFFER[];
 
 void BP_RFID_Init(void);
 
-void BP_RFID_LED1(char);
-void BP_RFID_LED2(char);
-
+// HardWare interfacing
+void BP_RFID_HW_LED1(char);
+void BP_RFID_HW_LED2(char);
 char BP_RFID_HW_READ_PARALLEL(char);
 void BP_RFID_HW_WRITE_PARALLEL(char, char, char);
 void BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(char* data, char size);
 void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char, char*, char);
-
 void BP_RFID_HW_ENABLE(void);
 void BP_RFID_HW_DISABLE(void);
+void BP_RFID_HW_LEDS_UPDATE(unsigned long);
 
-void BP_RFID_LEDS_UPDATE(unsigned long);
+void BP_RFID_Set_IRQ_Callback(void (*)(char));
 
-
+// Hardware independent
+// Chip support
 void BP_RFID_TRF_Software_Init(void);
 void BP_RFID_TRF_Set_ISO(char);
-
-
-
-char BP_RFID_Read_Register(char);
-void BP_RFID_Read_Registers(char,char*,char);
-
-void BP_RFID_Write_Register(char,char);
-
-void BP_RFID_Register_Callback(void (*)(char));
-
+char BP_RFID_TRF_Read_Register(char);
+void BP_RFID_TRF_Read_Registers(char,char*,char);
+void BP_RFID_TRF_Write_Register(char,char);
 void BP_RFID_TRF_FIFO_Reset(void);
 void BP_RFID_TRF_Turn_RF_On(void);
 void BP_RFID_TRF_Turn_RF_Off(void);
@@ -95,6 +89,9 @@ char BP_RFID_TRF_Get_RSSI(void);
 void BP_RFID_TRF_Set_NFCID1(char,...);
 void BP_RFID_TRF_Stop_Decoders(void);
 void BP_RFID_TRF_Run_Decoders(void);
+void BP_RFID_TRF_Reset_Decoders(void);
+
+void BP_RFID_BUFFER_CLEAR(void);
 
 
 #endif /* BP_HAL_H_ */

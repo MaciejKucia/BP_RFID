@@ -118,9 +118,11 @@
 // [W] - write only
 // [R] - read only
 
+// Main Control Registers
 #define TRF_REG_CHIP_STATE_CONTROL			0x00 // Chip Status Control
 #define TRF_REG_ISO_CONTROL					0x01 // ISO Control
 
+// Protocol Sub-Setting Registers
 #define TRF_REG_ISO_14443B_OPTIONS			0x02 // ISO14443B TX options
 #define TRF_REG_ISO_14443A_OPTIONS			0x03 // ISO14443A high bit rate options
 #define TRF_REG_TX_TIMER_EPC_HIGH			0x04 // TX timer setting, H-byte
@@ -131,29 +133,30 @@
 #define TRF_REG_MODULATOR_CONTROL			0x09 // Modulator and SYS_CLK control
 #define TRF_REG_RX_SPECIAL_SETTINGS			0x0A // RX Special Setting
 #define TRF_REG_REGULATOR_CONTROL			0x0B // Regulator and I/O control
-
 #define TRF_REG_SPECIAL_1					0x10 // Special Function Register, Preset 0x00
 #define TRF_REG_SPECIAL_2					0x11 // Special Function Register, Preset 0x00
-
 #define TRF_REG_FIFO_Levels					0x14 // Adjustable FIFO IRQ Levels Register
 //#define TRF_REG_RESERVED					0x15 // Reserved R/W
-
 #define TRF_REG_NFC_Low_Field				0x16 // NFC Low Field Detection Level
 #define TRF_REG_NFCID1_Number				0x17 // NFCID1 Number (up to 10 bytes wide) [W]
 #define TRF_REG_NFC_Target_Det_Lvl			0x18 // NFC Target Detection Level
 #define TRF_REG_NFC_Target_Protocol			0x19 // NFC Target Protocol
 
+// Status Registers
 #define TRF_REG_IRQ_STATUS					0x0C // IRQ Status Register
 #define TRF_REG_IRQ_MASK					0x0D // Collision Position and Interrupt Mask Register
 #define	TRF_REG_COLLISION_POSITION			0x0E // Collision position [R]
 #define TRF_REG_RSSI_LEVELS					0x0F // RSSI levels and oscillator status [R]
 
+// RAM
 #define TRF_REG_RAM_1						0x12 //
 #define TRF_REG_RAM_2						0x13 // RAM
 
+// Test Registers
 #define TRF_REG_TEST_SETTINGS_1				0x1A //
 #define TRF_REG_TEST_SETTINGS_2				0x1B // Test Register
 
+// FIFO Registers
 #define TRF_REG_FIFO_CONTROL				0x1C // FIFO status
 #define TRF_REG_TX_LENGTH_BYTE_1			0x1D // Tx length byte 1
 #define TRF_REG_TX_LENGTH_BYTE_2			0x1E // Tx length byte 2
@@ -163,22 +166,47 @@
 
 //---- IRQ -------------------------------------------------------
 
-/// IRQ_BITS TODO
+//---- IRQ bits --------------------------------------------------
 
-#define TRF_IRQ_NORESP	(1<<0) //Trigger for MCU to send next EOF/Slot Marker as defined by No Response Wait Time Register (0x07) (for ISO15693)
-#define TRF_IRQ_COL		(1<<1) //
-#define TRF_IRQ_ERR3	(1<<2)
-#define TRF_IRQ_ERR2	(1<<3)
-#define TRF_IRQ_ERR1	(1<<4)
-#define TRF_IRQ_FIFO	(1<<5)
-#define TRF_IRQ_RX		(1<<6)
+// Table 6-20. IRQ Status Register (0x0C)
+//
+
+// Signals that TX is in progress.
+// The flag is set at the start of TX but the interrupt request (IRQ = 1) is sent when TX is finished.
 #define TRF_IRQ_TX		(1<<7)
 
-// Table 5-17. IRQ and Status Register (0x0C) for NFC and Card Emulation Operation
+// Signals that RX SOF was received and RX is in progress.
+// The flag is set at the start of RX but the interrupt request (IRQ = 1) is sent when RX is finished.
+#define TRF_IRQ_RX		(1<<6)
 
-#define TRF_IRQ_NFC_Tx_End							(1<<7)
-#define TRF_IRQ_NFC_Rx_Start						(1<<6)
-#define TRF_IRQ_NFC_FIFO_High						(1<<5)
+// Signals the FIFO is 1/3 > FIFO > 2/3. Signals FIFO high or low
+#define TRF_IRQ_FIFO	(1<<5)
+
+// CRC error. Indicates receive CRC error only if B7 (no RX CRC) of ISO Control register is set to 0.
+#define TRF_IRQ_ERR1	(1<<4)
+
+// Parity error Indicates parity error for ISO14443A
+#define TRF_IRQ_ERR2	(1<<3)
+
+// Byte framing or EOF error. Indicates framing error
+#define TRF_IRQ_ERR3	(1<<2)
+
+// Collision error for ISO14443A and ISO15693 single subcarrier. Bit is set if more
+// then 6 or 7 (as defined in register 0x01) are detected inside one bit period of ISO14443A 106 kbps.
+// Collision error bit can also be triggered by external noise.
+#define TRF_IRQ_COL		(1<<1)
+
+// No response within the "No-response time" defined in RX No-response Wait Time register (0x07).
+// Signals the MCU that next slot command can be sent. Only for ISO15693.
+#define TRF_IRQ_NORESP	(1<<0)
+
+// Table 5-17. IRQ and Status Register (0x0C) for NFC and Card Emulation Operation
+//
+
+//#define TRF_IRQ_NFC_Tx_End						(1<<7)
+//#define TRF_IRQ_NFC_Rx_Start						(1<<6)
+//#define TRF_IRQ_NFC_FIFO_High						(1<<5) << Those 3 are shared between all modes
+
 #define TRF_IRQ_NFC_Protocol_Error					(1<<4)
 #define TRF_IRQ_NFC_SDD_Finished					(1<<3) //8
 #define TRF_IRQ_NFC_RF_Field_Change					(1<<2) //4
@@ -189,7 +217,7 @@
 
 //---- REGISTER SETTINGS -----------------------------------------
 
-// Table 6-2. Chip Status Control Register (0x00)
+// Table 6-2. Chip Status Control Register (0x00) #############################################################
 //
 //
 
@@ -226,9 +254,7 @@
 //0 = 3 V operation
 #define TRF_CSR_5V 				(1<<0)
 
-
-
-// Table 6-3. ISO Control Register (0x01)
+// Table 6-3. ISO Control Register (0x01) #############################################################
 //
 //
 
@@ -297,7 +323,7 @@
 #define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443A 	0|TRF_PROTOCOL_RFID|(1<<2)
 #define  TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B 	1|TRF_PROTOCOL_RFID|(1<<2)
 
-// Table 6-6. ISO14443B TX Options Register (0x02)
+// Table 6-6. ISO14443B TX Options Register (0x02) #############################################################
 //
 //
 
@@ -332,8 +358,37 @@
 #define TRF_ISO14443B_TX_Auto_SDD_SAK (1<<0)
 
 
+// Table 6-13. Modulator and SYS_CLK Control Register (0x09) #############################################################
 
-// Table 6-14. RX Special Setting Register (Address 0x0A)
+#define TRF_MOD_ASK10	0
+#define TRF_MOD_OOK100  1
+#define TRF_MOD_ASK7	2
+#define TRF_MOD_ASK8_5  3
+#define TRF_MOD_ASK13 	4
+#define TRF_MOD_ASK16 	5
+#define TRF_MOD_ASK22 	6
+#define TRF_MOD_ASK30 	7
+
+// For test and measurement purpose. ASK/OOK pin 12 can be used to monitor the analog subcarrier signal before the digitizing with DC level equal to AGND.
+// 1 = Sets pin 12 (ASK/OOK)  as an analog output
+// 0 = Default
+#define TRF_MOD_ASKOOK_ENABLE 8
+
+// SYS_CLK unsupported in BP
+//#define MOD_SYS_CLK (1<<4)
+//                    (1<<5)
+
+// Enable ASK/OOK pin (pin 12) for "on the fly change" between any preselected ASK modulation as defined by B0 to B2 and OOK modulation:
+// If B6 is 1, pin 12 is configured as follows: 1 = OOK modulation | 0 = Modulation as defined in B0 to B2 (0x09)
+//
+// 1 = Enables external selection of ASK or OOK modulation
+// 0 = Default operation as defined in B0 to B2 (0x09)
+#define TRF_MOD_ASKOOK_EXTERNAL (1<<6)
+
+//#define MOD_27MHZ (1<<7) this is not supported by booster pack hardware
+
+
+// Table 6-14. RX Special Setting Register (Address 0x0A) #############################################################
 //
 //
 
@@ -366,13 +421,31 @@
 #define TRF_NFC_RX_SPEC_Gain_Reduction_10dB (2<<2) //
 #define TRF_NFC_RX_SPEC_Gain_Reduction_15dB (3<<2) //Sets the RX gain reduction, and reduces sensitivity
 
-// Table 6-28. NFC Low Field Level Register (0x16)
+// Table 6-27. Adjustable FIFO IRQ Levels Register (0x14) #############################################################
+//
+//
+
+// FIFO low IRQ level (during TX)
+#define TRF_FIFO_TX_Level_4		0
+#define TRF_FIFO_TX_Level_8		1
+#define TRF_FIFO_TX_Level_16	2
+#define TRF_FIFO_TX_Level_32	3
+
+// FIFO low IRQ level (during RX)
+#define TRF_FIFO_RX_Level_124		(0<<2)
+#define TRF_FIFO_RX_Level_120		(1<<2)
+#define TRF_FIFO_RX_Level_112		(2<<2)
+#define TRF_FIFO_RX_Level_96		(3<<2)
+
+
+// Table 6-28. NFC Low Field Level Register (0x16) #############################################################
 //
 //
 
 // NFC passive 106-kbps and ISO14443A card emulation
 #define TRF_NFC_Field_Detection_Disable_Clock_Extractor (1<<7)
 
+// TODO: check! not in datasheet!
 #define TRF_NFC_Field_Detection_Level_Not_Active 	0
 #define TRF_NFC_Field_Detection_Level_480mV			1
 #define TRF_NFC_Field_Detection_Level_350mV			2
@@ -384,7 +457,7 @@
 
 
 
-// Table 5-14. NFC Target Detection Level Register (0x18)
+// Table 5-14. NFC Target Detection Level Register (0x18) #############################################################
 //
 //
 
@@ -416,22 +489,43 @@
 #define TRF_NFC_Target_Detection_NFCID1_10			(1<<7)
 
 
-// Table 5-16. NFC Target Protocol Register (0x19)
+// Table 6-30. NFC Target Protocol Register (0x19) #############################################################
+//
+//
+
+// RF level is above the wake-up level setting
+// 1 = The wakeup level is defined by bits B0 to B2 in the NFC Target Detection Level register (0x18)
 #define TRF_NFC_Target_Protocol_RF_Level_wake   	(1<<7) //80
+
+// The collision avoidance level is defined by bits B0 – B2 in the register 0x16 (NFC Low Field Detection Level) setting
+// 1 = RF level is above the RF collision avoidance level setting
 #define TRF_NFC_Target_Protocol_RF_Level_collision	(1<<6) //40
-// bit 5 n/a
+
+// bit 5 Reserved
+
+//The first initiator command had physical level coding of FeliCa or ISO14443A
+// 1 = FeliCa
+// 0 = ISO14443A
 #define TRF_NFC_Target_Protocol_FeliCa				(1<<4) //10
+
+// The first initiator/reader command was SENS_REQ or ALL_REQ
+// 1 = Passive target at 106 kbps or transponder emulation
 #define TRF_NFC_Target_Protocol_PassiveOrTag		(1<<3) //08
 
+// The first reader command was ISO14443B
+// 1 = ISO14443B transponder emulation
 #define TRF_NFC_Target_Protocol_ISO14443B			(1<<2) //04
 
 //Bit rate of first received command
+//00 = Reserved
+//01 = 106 kbps
+//10 = 212 kbps
+//11 = 424 kbps
 #define TRF_NFC_Target_Protocol_106kbps				1	  //01
 #define TRF_NFC_Target_Protocol_212kbps				2     //02
 #define TRF_NFC_Target_Protocol_424kbps				3     //03
 
-
-
+//---- END -------------------------------------------------------
 
 // Power Supply Regulator Setting
 // VDD_RF = 3.3 V, VDD_A = 3.3 V, VDD_X = 3.3 V
@@ -439,25 +533,7 @@
 #define POWER_SETTING 0x06
 
 
-/// Modulator and SYS_CLK Control Register 0x09
-/// TODO:
-///
-#define MOD_ASK10	0
-#define MOD_OOK100  1
-#define MOD_ASK7	2
-#define MOD_ASK8_5  3
-#define MOD_ASK13 	4
-#define MOD_ASK16 	5
-#define MOD_ASK22 	6
-#define MOD_ASK30 	7
 
-#define MOD_ASKOOK_ENABLE 8
-
-//#define MOD_SYS_CLK (1<<4) (1<<5)
-
-#define MOD_ASKOOK_EXTERNAL (1<<6)
-
-//#define MOD_27MHZ (1<<7) this is not supported by booster pack hardware
 
 
 #endif /* TRF797X_H_ */

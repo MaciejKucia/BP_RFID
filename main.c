@@ -23,9 +23,10 @@
 
 #include "TRF797x.h"
 
-#include "BP_RFID.h"
+#include "BP_RFID_TRF.h"
 #include "BP_ISO15693.h"
-#include "BP_NFC.h"
+//#include "BP_NFC.h"
+#include "BP_NDEF.h"
 
 #define HEARTBEAT_LED GPIO_PIN_3
 
@@ -37,7 +38,7 @@ void SysTickISR(void)
 	if (SysTickCounter++ > 10000)
 		SysTickCounter = 0;
 	// update BP LEDs if blinking
-	BP_RFID_LEDS_UPDATE(SysTickCounter);
+	BP_RFID_HW_LEDS_UPDATE(SysTickCounter);
 }
 
 /// User code entry point ///
@@ -64,6 +65,10 @@ int main(void)
 	IntMasterEnable();
 
 	printf("[START]\n");
+
+
+	BP_NDEF_Init();
+
 
 	for (;;)
 	{
@@ -95,33 +100,10 @@ int main(void)
 
 			break;
 
-			// Test
-		case 'T':
-
-			BP_ISO15693_Init();
-			BP_ISO15693_Inventory();
-			BP_ISO15693_Read_Single_Block(0);
-			BP_ISO15693_Get_System_Information(0);
-
-
-			break;
-
 		case 'N':
-			BP_RFID_NFC_Init();
-			BP_RFID_NFC_Collision_Avoidance();
-			break;
-
-		case '0':
-			BP_RFID_LED1(LED_BLINK_FAST);
-			break;
-		case '1':
-			BP_RFID_LED1(LED_BLINK_SLOW);
-			break;
-		case '2':
-			BP_RFID_LED2(LED_BLINK_FAST);
-			break;
-		case '3':
-			BP_RFID_LED2(LED_BLINK_SLOW);
+			//BP_RFID_NFC_Init();
+			//BP_RFID_NFC_Collision_Avoidance();
+			BP_NDEF_Init();
 			break;
 
 		}

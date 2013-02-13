@@ -5,7 +5,7 @@
  *      Author: x0184343
  */
 
-#include "BP_RFID.h"
+#include "BP_RFID_TRF.h"
 #include "TRF797x.h"
 #include "util/uartstdio.h"
 
@@ -26,9 +26,9 @@ void BP_RFID_NFC_IRQ(char flags);
 void BP_RFID_NFC_Init()
 {
 	printf("[NFC Initialized]\n");
-	BP_RFID_Register_Callback(BP_RFID_NFC_IRQ);
+	BP_RFID_Set_IRQ_Callback(BP_RFID_NFC_IRQ);
 	BP_RFID_TRF_Software_Init();
-	BP_RFID_TRF_Modulator_Control(MOD_OOK100);
+	BP_RFID_TRF_Modulator_Control(TRF_MOD_OOK100);
 	// passive
 	BP_RFID_TRF_Set_ISO(TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B);
 	//BP_RFID_TRF_Set_ISO(TRF_PROTOCOL_NFC_MODE_106kbps);
@@ -37,28 +37,28 @@ void BP_RFID_NFC_Init()
 void BP_RFID_NFC_Collision_Avoidance()
 {
 	char buffer[16];
-	int i;
+	//int i;
 
 
-	BP_RFID_Write_Register(TRF_REG_RX_SPECIAL_SETTINGS, 0x3C);
+	BP_RFID_TRF_Write_Register(TRF_REG_RX_SPECIAL_SETTINGS, 0x3C);
 	//BP_RFID_Read_Register(TRF_REG_RX_SPECIAL_SETTINGS) | TRF_NFC_RX_SPEC_Gain_Reduction_15dB | TRF_NFC_RX_SPEC_ISO14443 | TRF_NFC_RX_SPEC_848kbps_ISO14443);
 	//0x3C);
 
-	BP_RFID_Write_Register(
+	BP_RFID_TRF_Write_Register(
 			TRF_REG_NFC_Target_Det_Lvl,
 			7);
 			//TRF_NFC_Target_Detection_Level_170mW | TRF_NFC_Target_Detection_NFCID1_4);
 	//	0x01 | 0x02 | 0x04 | (1 << 6) | (1 << 5));
 
 	//BP_RFID_TRF_Set_NFCID1(7, 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD);
-	BP_RFID_TRF_Set_NFCID1(4, 0x12, 0x34, 0x56, 0x78);
 
-	BP_RFID_Write_Register(TRF_REG_NFC_Low_Field, 3); //TODO
 
-	BP_RFID_Write_Register(TRF_REG_ISO_14443B_OPTIONS, 0);
+	BP_RFID_TRF_Write_Register(TRF_REG_NFC_Low_Field, 3); //TODO
+
+	BP_RFID_TRF_Write_Register(TRF_REG_ISO_14443B_OPTIONS, 0);
 
 	// Start radio and sensing circuitry
-	BP_RFID_Write_Register(
+	BP_RFID_TRF_Write_Register(
 			TRF_REG_CHIP_STATE_CONTROL,
 			TRF_CSR_RECEIVER_ON | TRF_CSR_RF_ON);
 
@@ -134,7 +134,7 @@ void BP_RFID_NFC_IRQ(char flags)
 		printf("IRQ set due to RX start");
 
 		printf("{%d bytes in FIFO]\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
-		BP_RFID_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
+		BP_RFID_TRF_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
 		//printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
 		for (i = 0; i < s; ++i)
 			printf("(%x)", BP_RFID_BUFFER[i]);
@@ -156,7 +156,7 @@ void BP_RFID_NFC_IRQ(char flags)
 	if (flags & TRF_IRQ_NFC_RF_Field_Change)
 	{
 
-		c = BP_RFID_Read_Register(TRF_REG_NFC_Target_Det_Lvl) & 0xDF;
+		c = BP_RFID_TRF_Read_Register(TRF_REG_NFC_Target_Det_Lvl) & 0xDF;
 		printf("RF field change %x", c);
 
 		printf(c & TRF_NFC_Target_Protocol_RF_Level_wake ? "(in)" : "(out)");
