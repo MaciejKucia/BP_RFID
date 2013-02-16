@@ -82,6 +82,7 @@ int main(void)
 			printf(":0x%X,", addr);
 			printf("0x%x]\n", BP_RFID_HW_READ_PARALLEL(addr));
 			break;
+
 		case 'w':
 			printf("[write parallel reg");
 			addr = UARTgetc();

@@ -10,6 +10,8 @@
 
 //---- Direct commands ------------------------------------------
 
+//TODO: Add TRF_CMD_
+
 #define IDLE						0x00
 
 //This command starts a Power on Reset
@@ -536,11 +538,16 @@
 
 //---- END -------------------------------------------------------
 
+//---- OTHER -----------------------------------------------------
+
 // Power Supply Regulator Setting
 // VDD_RF = 3.3 V, VDD_A = 3.3 V, VDD_X = 3.3 V
 // TODO: check if needed
-#define POWER_SETTING 0x06
+#define TRF_POWER_SETTING 0x06
 
+#define TRF_FIFO_SIZE 128
+
+//---- END -------------------------------------------------------
 
 
 

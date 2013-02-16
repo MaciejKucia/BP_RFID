@@ -159,14 +159,14 @@ void BP_RFID_HW_DISABLE()
 ///
 void BP_RFID_HW_INT_ENABLE()
 {
-	ROM_GPIOPinIntDisable(GPIO_PORTE_BASE, IRQ_PIN);
+	ROM_GPIOPinIntEnable(GPIO_PORTE_BASE, IRQ_PIN);
 }
 
 /// Disable interrupts from chip
 ///
 void BP_RFID_HW_INT_DISABLE()
 {
-	ROM_GPIOPinIntEnable(GPIO_PORTE_BASE, IRQ_PIN);
+	ROM_GPIOPinIntDisable(GPIO_PORTE_BASE, IRQ_PIN);
 }
 
 

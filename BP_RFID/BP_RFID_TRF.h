@@ -55,6 +55,12 @@ extern char BP_RFID_RX_BUFFER[];
 extern volatile char BP_RFID_RX_BUFFER_COUNT;
 
 
+/// last IRQ flags
+extern volatile char TRF_IRQ_LAST_FLAGS;
+
+/// IRQ happened flags
+extern volatile char TRF_IRQ_SEMAPHORE;
+
 /// Functions ///
 ///
 // TODO: make inline what should be
@@ -102,6 +108,9 @@ void BP_RFID_TRF_Run_Decoders(void);
 void BP_RFID_TRF_Reset_Decoders(void);
 
 void BP_RFID_BUFFER_CLEAR(void);
+
+char BP_RFID_TRF_Wait_For_Rx_End(void);
+char BP_RFID_TRF_Wait_For_Tx_End(void);
 
 
 #endif /* BP_HAL_H_ */
