@@ -122,14 +122,14 @@ void BP_RFID_NFC_IRQ(char flags)
 
 	printf("NFC:");
 
-	if (flags & TRF_IRQ_NFC_Tx_End)
+	if (flags & TRF_IRQ_TX)
 	{
 		printf("IRQ set due to end of TX");
 		BP_RFID_NFC_IRQ_TX_FLAG = 1;
 		BP_RFID_TRF_FIFO_Reset();
 	}
 
-	if (flags & TRF_IRQ_NFC_Rx_Start)
+	if (flags & TRF_IRQ_RX)
 	{
 		printf("IRQ set due to RX start");
 
@@ -146,7 +146,7 @@ void BP_RFID_NFC_IRQ(char flags)
 		BP_RFID_NFC_IRQ_RX_FLAG=1;
 	}
 
-	if (flags & TRF_IRQ_NFC_FIFO_High)
+	if (flags & TRF_IRQ_FIFO)
 		printf("Signals the FIFO is 1/3 > FIFO > 2/3");
 
 	if (flags & TRF_IRQ_NFC_Protocol_Error) printf("Protocol error");

@@ -200,17 +200,26 @@
 // Signals the MCU that next slot command can be sent. Only for ISO15693.
 #define TRF_IRQ_NORESP	(1<<0)
 
-// Table 5-17. IRQ and Status Register (0x0C) for NFC and Card Emulation Operation
+// Table 6-21. IRQ Status Register (0x0C) for NFC and Card Emulation Operation
 //
 
 //#define TRF_IRQ_NFC_Tx_End						(1<<7)
 //#define TRF_IRQ_NFC_Rx_Start						(1<<6)
 //#define TRF_IRQ_NFC_FIFO_High						(1<<5) << Those 3 are shared between all modes
 
+// Any protocol error
 #define TRF_IRQ_NFC_Protocol_Error					(1<<4)
-#define TRF_IRQ_NFC_SDD_Finished					(1<<3) //8
-#define TRF_IRQ_NFC_RF_Field_Change					(1<<2) //4
+
+// SDD (passive target at 106 kbps) successfully finished
+#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
+
+// Sufficient RF signal level for operation was reached or lost
+#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
+
+// The system has finished collision avoidance and the minimum wait time is finished elapsed.
 #define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
+
+// The external RF field was present so the collision avoidance could not be carried out.
 #define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
 
 //---- END -------------------------------------------------------

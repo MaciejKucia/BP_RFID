@@ -275,7 +275,7 @@ static void
 FaultISR(void)
 {
     //
-    // Enter an infinite loop.
+    //Enter an infinite loop.
     //
     while(1)
     {

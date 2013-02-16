@@ -30,6 +30,7 @@
 
 // Recommended DATA_CLK is 2 [MHz]
 // 2 MHz = period of 0.5 [us] approx 1 [us]
+// This is experimental value
 #define BP_RFID_HW_PERIOD 1
 
 /// Booster Pack LED ///
@@ -53,18 +54,18 @@ void BP_RFID_HW_LED1(char mode)
 	{
 	case LED_OFF:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN, LED1_PIN);
+		ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN, LED1_PIN);
 		break;
 	case LED_ON:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN, 0);
+		ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED1_PIN, 0);
 		break;
 	case LED_TOGGLE:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED1_PIN,
-				~GPIOPinRead(GPIO_PORTA_BASE, LED1_PIN));
+				~ROM_GPIOPinRead(GPIO_PORTA_BASE, LED1_PIN));
 		break;
 	case LED_BLINK_FAST:
 		LEDS_FLAGS = ((LEDS_FLAGS & 0xF0) | 0x0A);
@@ -83,18 +84,18 @@ void BP_RFID_HW_LED2(char mode)
 	{
 	case LED_OFF:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN, LED2_PIN);
+		ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN, LED2_PIN);
 		break;
 	case LED_ON:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN, 0);
+		ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED2_PIN, 0);
 		break;
 	case LED_TOGGLE:
 		LEDS_FLAGS = 0;
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED2_PIN,
-				~GPIOPinRead(GPIO_PORTA_BASE, LED2_PIN));
+				~ROM_GPIOPinRead(GPIO_PORTA_BASE, LED2_PIN));
 		break;
 	case LED_BLINK_FAST:
 		LEDS_FLAGS = ((LEDS_FLAGS & 0x0F) | 0xA0);
@@ -111,14 +112,14 @@ void BP_RFID_HW_LEDS_UPDATE(unsigned long SysTickCounter)
 {
 	if ((LEDS_FLAGS & 0x0F) == 0x0A)
 	{
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED1_PIN,
 				((SysTickCounter % 100) > 25) ? LED1_PIN : 0);
 	}
 	else if ((LEDS_FLAGS & 0x0F) == 0x0B)
 	{
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED1_PIN,
 				((SysTickCounter % 500) > 250) ? LED1_PIN : 0);
@@ -126,14 +127,14 @@ void BP_RFID_HW_LEDS_UPDATE(unsigned long SysTickCounter)
 
 	if ((LEDS_FLAGS & 0xF0) == 0xA0)
 	{
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED2_PIN,
 				((SysTickCounter % 100) > 25) ? LED2_PIN : 0);
 	}
 	else if ((LEDS_FLAGS & 0xF0) == 0xB0)
 	{
-		GPIOPinWrite(
+		ROM_GPIOPinWrite(
 				GPIO_PORTA_BASE,
 				LED2_PIN,
 				((SysTickCounter % 500) > 250) ? LED2_PIN : 0);
@@ -144,63 +145,78 @@ void BP_RFID_HW_LEDS_UPDATE(unsigned long SysTickCounter)
 ///
 void BP_RFID_HW_ENABLE()
 {
-	GPIOPinWrite(GPIO_PORTF_BASE, EN1_PIN, EN1_PIN);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, EN1_PIN, EN1_PIN);
 }
 
 /// Disable RF chip
 ///
 void BP_RFID_HW_DISABLE()
 {
-	GPIOPinWrite(GPIO_PORTF_BASE, EN1_PIN, 0);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, EN1_PIN, 0);
 }
+
+/// Enable interrupts from chip
+///
+void BP_RFID_HW_INT_ENABLE()
+{
+	ROM_GPIOPinIntDisable(GPIO_PORTE_BASE, IRQ_PIN);
+}
+
+/// Disable interrupts from chip
+///
+void BP_RFID_HW_INT_DISABLE()
+{
+	ROM_GPIOPinIntEnable(GPIO_PORTE_BASE, IRQ_PIN);
+}
+
 
 /// Set clock high
 ///
 inline void BP_RFID_HW_DATA_CLK_HIGH(void)
 {
-	GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, DATA_CLK_PIN);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, DATA_CLK_PIN);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Set clock low
 ///
 inline void BP_RFID_HW_DATA_CLK_LOW()
 {
-	GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, 0);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_GPIOPinWrite(GPIO_PORTE_BASE, DATA_CLK_PIN, 0);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Put bits on data bus
 ///
 void BP_RFID_HW_PARALLEL_PUT(char adrcmd)
 {
-	GPIOPinWrite(GPIO_PORTD_BASE, T8_PIN, adrcmd & (1 << 0) ? T8_PIN : 0);
-	GPIOPinWrite(GPIO_PORTD_BASE, T7_PIN, adrcmd & (1 << 1) ? T7_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTD_BASE, T8_PIN, adrcmd & (1 << 0) ? T8_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTD_BASE, T7_PIN, adrcmd & (1 << 1) ? T7_PIN : 0);
 
-	GPIOPinWrite(GPIO_PORTC_BASE, T6_PIN, adrcmd & (1 << 2) ? T6_PIN : 0);
-	GPIOPinWrite(GPIO_PORTC_BASE, T5_PIN, adrcmd & (1 << 3) ? T5_PIN : 0);
-	GPIOPinWrite(GPIO_PORTC_BASE, T4_PIN, adrcmd & (1 << 4) ? T4_PIN : 0);
-	GPIOPinWrite(GPIO_PORTC_BASE, T3_PIN, adrcmd & (1 << 5) ? T3_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTC_BASE, T6_PIN, adrcmd & (1 << 2) ? T6_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTC_BASE, T5_PIN, adrcmd & (1 << 3) ? T5_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTC_BASE, T4_PIN, adrcmd & (1 << 4) ? T4_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTC_BASE, T3_PIN, adrcmd & (1 << 5) ? T3_PIN : 0);
 
-	GPIOPinWrite(GPIO_PORTB_BASE, T2_PIN, adrcmd & (1 << 6) ? T2_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTB_BASE, T2_PIN, adrcmd & (1 << 6) ? T2_PIN : 0);
 
-	GPIOPinWrite(GPIO_PORTF_BASE, T1_PIN, adrcmd & (1 << 7) ? T1_PIN : 0);
+	ROM_GPIOPinWrite(GPIO_PORTF_BASE, T1_PIN, adrcmd & (1 << 7) ? T1_PIN : 0);
 }
 
 /// Set bus as output from MCU
 ///
 void BP_RFID_HW_PARALEL_SET_OUTPUT()
 {	// Port B is used by T2
-	GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, T2_PIN);
+	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, T2_PIN);
 
 	// Port C is used by T3-T6
-	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, T3_PIN | T4_PIN | T5_PIN | T6_PIN);
+	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, T3_PIN | T4_PIN | T5_PIN | T6_PIN);
 
 	// Port D is used by T7 T9
-	GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, T7_PIN | T8_PIN);
+	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, T7_PIN | T8_PIN);
 
 	// Port F is used by  T1
-	GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, T1_PIN);
+	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, T1_PIN);
 }
 
 /// Set bus as input from mcu
@@ -208,16 +224,16 @@ void BP_RFID_HW_PARALEL_SET_OUTPUT()
 void BP_RFID_HW_PARALEL_SET_INPUT()
 {
 	// Port B is used by T2
-	GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, T2_PIN);
+	ROM_GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, T2_PIN);
 
 	// Port C is used by T3-T6
-	GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, T3_PIN | T4_PIN | T5_PIN | T6_PIN);
+	ROM_GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, T3_PIN | T4_PIN | T5_PIN | T6_PIN);
 
 	// Port D is used by T7 T9
-	GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, T7_PIN | T8_PIN);
+	ROM_GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, T7_PIN | T8_PIN);
 
 	// Port F is used by  T1
-	GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, T1_PIN);
+	ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, T1_PIN);
 }
 
 /// Read data from bus
@@ -225,17 +241,17 @@ void BP_RFID_HW_PARALEL_SET_INPUT()
 char BP_RFID_HW_PARALLEL_GET()
 {
 	char ret = 0;
-	ret |= (GPIOPinRead(GPIO_PORTF_BASE, T1_PIN) ? 1 << 7 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTF_BASE, T1_PIN) ? 1 << 7 : 0);
 
-	ret |= (GPIOPinRead(GPIO_PORTB_BASE, T2_PIN) ? 1 << 6 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTB_BASE, T2_PIN) ? 1 << 6 : 0);
 
-	ret |= (GPIOPinRead(GPIO_PORTC_BASE, T3_PIN) ? 1 << 5 : 0);
-	ret |= (GPIOPinRead(GPIO_PORTC_BASE, T4_PIN) ? 1 << 4 : 0);
-	ret |= (GPIOPinRead(GPIO_PORTC_BASE, T5_PIN) ? 1 << 3 : 0);
-	ret |= (GPIOPinRead(GPIO_PORTC_BASE, T6_PIN) ? 1 << 2 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTC_BASE, T3_PIN) ? 1 << 5 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTC_BASE, T4_PIN) ? 1 << 4 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTC_BASE, T5_PIN) ? 1 << 3 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTC_BASE, T6_PIN) ? 1 << 2 : 0);
 
-	ret |= (GPIOPinRead(GPIO_PORTD_BASE, T7_PIN) ? 1 << 1 : 0);
-	ret |= (GPIOPinRead(GPIO_PORTD_BASE, T8_PIN) ? 1 << 0 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTD_BASE, T7_PIN) ? 1 << 1 : 0);
+	ret |= (ROM_GPIOPinRead(GPIO_PORTD_BASE, T8_PIN) ? 1 << 0 : 0);
 
 	return ret;
 }
@@ -245,11 +261,11 @@ void BP_RFID_HW_PARALLEL_START()
 {
 	BP_RFID_HW_PARALLEL_PUT(0x00);
 	BP_RFID_HW_DATA_CLK_HIGH();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0xFF);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_DATA_CLK_LOW();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
 }
 
@@ -257,22 +273,31 @@ void BP_RFID_HW_PARALLEL_START()
 void BP_RFID_HW_PARALLEL_STOP()
 {
 	BP_RFID_HW_PARALLEL_PUT(0xFF);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_DATA_CLK_HIGH();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_DATA_CLK_LOW();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 }
 
 /// Send stop while in multiple mode
 void BP_RFID_HW_PARALLEL_STOP_MULTIPLE()
 {
 	BP_RFID_HW_PARALLEL_PUT(0x80);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_PARALLEL_PUT(0x00);
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
+}
+
+/// Clock data
+///
+void BP_RFID_HW_SIMPLE_WRITE(char data)
+{
+	BP_RFID_HW_PARALLEL_PUT(data);
+	BP_RFID_HW_DATA_CLK_HIGH();
+	BP_RFID_HW_DATA_CLK_LOW();
 }
 
 /// Write data to register
@@ -290,16 +315,11 @@ void BP_RFID_HW_WRITE_PARALLEL(char adr, char data, char command)
 	BP_RFID_HW_PARALLEL_START();
 
 	// put address on bus
-	BP_RFID_HW_PARALLEL_PUT(adrcmd);
-
-	BP_RFID_HW_DATA_CLK_HIGH();
-	BP_RFID_HW_DATA_CLK_LOW();
+	BP_RFID_HW_SIMPLE_WRITE(adrcmd);
 
 	if (!command)
 	{
-		BP_RFID_HW_PARALLEL_PUT(data);
-		BP_RFID_HW_DATA_CLK_HIGH();
-		BP_RFID_HW_DATA_CLK_LOW();
+		BP_RFID_HW_SIMPLE_WRITE(data);
 	}
 
 	BP_RFID_HW_PARALLEL_STOP();
@@ -320,11 +340,7 @@ void BP_RFID_HW_WRITE_PARALLEL_MULTIPLE(char* data, char size)
 	for (i = 0; i < size; ++i)
 	{
 		// put data
-		BP_RFID_HW_PARALLEL_PUT(data[i]);
-		// debug
-		//printf("{%x}",data[i]);
-		BP_RFID_HW_DATA_CLK_HIGH();
-		BP_RFID_HW_DATA_CLK_LOW();
+		BP_RFID_HW_SIMPLE_WRITE(data[i]);
 	}
 
 	//printf("]");
@@ -343,19 +359,17 @@ char BP_RFID_HW_READ_PARALLEL(char adr)
 	BP_RFID_HW_PARALLEL_START();
 
 	// put address on bus
-	BP_RFID_HW_PARALLEL_PUT(adrcmd);
-
-	BP_RFID_HW_DATA_CLK_HIGH();
-	BP_RFID_HW_DATA_CLK_LOW();
+	BP_RFID_HW_SIMPLE_WRITE(adrcmd);
 
 	BP_RFID_HW_PARALEL_SET_INPUT();
 	BP_RFID_HW_PARALLEL_PUT(0);
 
 	BP_RFID_HW_DATA_CLK_HIGH();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	//printf ("[r %x > %x]",(adr & 0x1F) | (1 << 6),
 	adrcmd = BP_RFID_HW_PARALLEL_GET();
-	SysCtlDelay(BP_RFID_HW_PERIOD);
+	//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 	BP_RFID_HW_DATA_CLK_LOW();
 
 	BP_RFID_HW_PARALEL_SET_OUTPUT();
@@ -379,11 +393,7 @@ void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char adr, char* buffer, char size)
 	BP_RFID_HW_PARALLEL_START();
 
 	// put address on bus
-	BP_RFID_HW_PARALLEL_PUT(adrcmd);
-
-	//clock high
-	BP_RFID_HW_DATA_CLK_HIGH();
-	BP_RFID_HW_DATA_CLK_LOW();
+	BP_RFID_HW_SIMPLE_WRITE(adrcmd);
 
 	BP_RFID_HW_PARALEL_SET_INPUT();
 	BP_RFID_HW_PARALLEL_PUT(0);
@@ -391,9 +401,9 @@ void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char adr, char* buffer, char size)
 	for (i = 0; i < size; ++i)
 	{
 		BP_RFID_HW_DATA_CLK_HIGH();
-		SysCtlDelay(BP_RFID_HW_PERIOD);
+		//SysCtlDelay(BP_RFID_HW_PERIOD);
 		buffer[i] = BP_RFID_HW_PARALLEL_GET();
-		SysCtlDelay(BP_RFID_HW_PERIOD);
+		//ROM_SysCtlDelay(BP_RFID_HW_PERIOD);
 		BP_RFID_HW_DATA_CLK_LOW();
 	}
 

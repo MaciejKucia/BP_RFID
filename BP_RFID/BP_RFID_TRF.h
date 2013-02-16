@@ -51,6 +51,8 @@
 
 /// TODO: determine minimum size
 extern char BP_RFID_BUFFER[];
+extern char BP_RFID_RX_BUFFER[];
+extern volatile char BP_RFID_RX_BUFFER_COUNT;
 
 
 /// Functions ///
@@ -69,6 +71,14 @@ void BP_RFID_HW_READ_PARALLEL_MULTIPLE(char, char*, char);
 void BP_RFID_HW_ENABLE(void);
 void BP_RFID_HW_DISABLE(void);
 void BP_RFID_HW_LEDS_UPDATE(unsigned long);
+
+void BP_RFID_HW_PARALLEL_START(void);
+void BP_RFID_HW_PARALLEL_STOP(void);
+void BP_RFID_HW_PARALLEL_STOP_MULTIPLE(void);
+void BP_RFID_HW_SIMPLE_WRITE(char);
+
+void BP_RFID_HW_INT_DISABLE(void);
+void BP_RFID_HW_INT_ENABLE(void);
 
 void BP_RFID_Set_IRQ_Callback(void (*)(char));
 
