@@ -42,7 +42,7 @@
 // Further ones are custom A0-DF
 
 
-//Flags
+// --- Flags ----------------------------------------------------------------
 
 
 /// FL0 Request
@@ -65,7 +65,7 @@
 //b4 Protocol
 //Extension_flag 1 Protocol format is extended. Reserved for future use
 //0 No protocol format extension
-#define ISO15693_FL0_Protocol_Extension_flag			(1<<3) //08
+// #define ISO15693_FL0_Protocol_Extension_flag			(1<<3) //08
 
 /// FL1 Inventory not set
 
@@ -76,7 +76,7 @@
 
 //b6 Address_flag
 //0 Request is not addressed. UID field is not included. It shall be executed by any VICC.
-//1 //Request is addressed. UID field is included. It shall be executed only by the VICC whose UID matches the UID specified in the request.
+//1 Request is addressed. UID field is included. It shall be executed only by the VICC whose UID matches the UID specified in the request.
 #define ISO15693_FL1_Address_flag						(1<<5) //20
 
 //b7 Option_flag be set to 0 if not otherwise defined by the command.
@@ -128,9 +128,16 @@
 //b7 RFU 0
 //b8 RFU 0
 
-// Functions
+// --- Other -------------------------------------------------------------------------
+
+#define ISO15693_SIXTEEN_SLOTS	0x06
+#define ISO15693_ONE_SLOT		0x26
+
+
+// --- Functions ----------------------------------------------------------------------
 void BP_ISO15693_Inventory(void);
 void BP_ISO15693_Init(void);
 
 
 #endif /* BP_ISO15693_H_ */
+

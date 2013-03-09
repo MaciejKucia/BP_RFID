@@ -7,10 +7,10 @@
 
 #include "BP_RFID_TRF.h"
 #include "TRF797x.h"
+#include "inc/hw_types.h"
 #include "util/uartstdio.h"
 
 //TODO: remove
-#include "inc/hw_types.h"
 #include "driverlib/sysctl.h"
 #include "util/uartstdio.h"
 
@@ -27,7 +27,7 @@ void BP_RFID_NFC_Init()
 {
 	printf("[NFC Initialized]\n");
 	BP_RFID_Set_IRQ_Callback(BP_RFID_NFC_IRQ);
-	BP_RFID_TRF_Software_Init();
+	//BP_RFID_TRF_Software_Init();
 	BP_RFID_TRF_Modulator_Control(TRF_MOD_OOK100);
 	// passive
 	BP_RFID_TRF_Set_ISO(TRF_PROTOCOL_NFC_MODE_EMU_ISO14443B);
@@ -63,16 +63,14 @@ void BP_RFID_NFC_Collision_Avoidance()
 			TRF_CSR_RECEIVER_ON | TRF_CSR_RF_ON);
 
 	BP_RFID_TRF_FIFO_Reset();
-	BP_RFID_TRF_Stop_Decoders(); //Reset better?
-	BP_RFID_TRF_Run_Decoders();
+	BP_RFID_TRF_Reset_Decoders();
 
 	BP_RFID_NFC_IRQ_RX_FLAG = 0;
 
 	while(!BP_RFID_NFC_IRQ_RX_FLAG);
 
 	BP_RFID_TRF_FIFO_Reset();
-	BP_RFID_TRF_Stop_Decoders(); //Reset better?
-	BP_RFID_TRF_Run_Decoders();
+	BP_RFID_TRF_Reset_Decoders();
 
 	//if (BP_RFID_BUFFER[0]==0x05)
 	//{
@@ -117,8 +115,8 @@ void BP_RFID_NFC_Collision_Avoidance()
 void BP_RFID_NFC_IRQ(char flags)
 {
 	char c;
-	int i;
-	char s;
+	//int i;
+	//char s;
 
 	printf("NFC:");
 
@@ -129,22 +127,22 @@ void BP_RFID_NFC_IRQ(char flags)
 		BP_RFID_TRF_FIFO_Reset();
 	}
 
-	if (flags & TRF_IRQ_RX)
-	{
-		printf("IRQ set due to RX start");
-
-		printf("{%d bytes in FIFO]\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
-		BP_RFID_TRF_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
-		//printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
-		for (i = 0; i < s; ++i)
-			printf("(%x)", BP_RFID_BUFFER[i]);
-
-		printf("{%d bytes in FIFO]\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
-
-		BP_RFID_TRF_FIFO_Reset();
-
-		BP_RFID_NFC_IRQ_RX_FLAG=1;
-	}
+//	if (flags & TRF_IRQ_RX)
+//	{
+//		printf("IRQ set due to RX start");
+//
+//		printf("{%d bytes in FIFO]\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
+//		//BP_RFID_TRF_Read_Registers(TRF_REG_FIFO, BP_RFID_BUFFER, s);
+//		//printf("%d bytes in FIFO\n", BP_RFID_TRF_FIFO_How_Many_Bytes());
+////		for (i = 0; i < s; ++i)
+////			printf("(%x)", BP_RFID_BUFFER[i]);
+//
+//		printf("{%d bytes in FIFO]\n", s = BP_RFID_TRF_FIFO_How_Many_Bytes());
+//
+//		BP_RFID_TRF_FIFO_Reset();
+//
+//		BP_RFID_NFC_IRQ_RX_FLAG=1;
+//	}
 
 	if (flags & TRF_IRQ_FIFO)
 		printf("Signals the FIFO is 1/3 > FIFO > 2/3");
@@ -176,5 +174,45 @@ void BP_RFID_NFC_IRQ(char flags)
 char BP_RFID_NFC_Send(char* data, char size)
 {
 	return 0;
+}
+
+// TODO: this do not fit here
+//
+void BP_RFID_TRF_NFC_Target_Protocol_DEBUG()
+{
+	char r = BP_RFID_TRF_Read_Register(TRF_REG_NFC_Target_Protocol);
+	printf("[Target_Protocol:");
+	if (r & TRF_NFC_Target_Protocol_RF_Level_wake)
+		printf("(RF level is above the wake-up level setting)");
+
+	if (r & TRF_NFC_Target_Protocol_RF_Level_collision)
+		printf("(RF level is above the RF collision avoidance level setting)");
+
+	printf(
+			"(The first initiator command had physical level coding of %s)",
+			r & TRF_NFC_Target_Protocol_FeliCa ? "FeliCa" : "ISO14443A");
+
+	if (r & TRF_NFC_Target_Protocol_PassiveOrTag)
+		printf("(Passive target at 106 kbps or transponder emulation)");
+
+	if (r & TRF_NFC_Target_Protocol_ISO14443B)
+		printf("(The first reader command was ISO14443B)");
+
+	switch (r & 0x3)
+	{
+	case 1:
+		printf("(106kbps)");
+		break;
+	case 2:
+		printf("(212kbps)");
+		break;
+	case 3:
+		printf("(424kbps)");
+		break;
+	default:
+		printf("(ERROR)");
+		break;
+	}
+	printf("]\n");
 }
 

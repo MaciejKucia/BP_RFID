@@ -131,7 +131,7 @@ static unsigned long g_ulBase = 0;
 // equivalent.
 //
 //*****************************************************************************
-static const char * const g_pcHex = "0123456789abcdef";
+static const char * const g_pcHex = "0123456789ABCDEF";
 
 //*****************************************************************************
 //
@@ -1177,7 +1177,7 @@ void printf(const char *pcString, ...)
 				//
 				// Set the base to 16.
 				// [USER CODE]
-				if (*pcString == 'b')
+				if (*(pcString-1) == 'b')
 					ulBase = 2;
 				else
 					ulBase = 16;

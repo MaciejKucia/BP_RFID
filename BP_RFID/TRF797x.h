@@ -8,110 +8,122 @@
 #ifndef TRF797X_H_
 #define TRF797X_H_
 
+
+/// Write operation flags
+///
+#define TRF_IS_COMMAND 			(0x80)	// This is direct command
+#define TRF_DO_READ 			(1<<6)	// This is read start
+#define TRF_CONTINOUS_MODE 		(1<<5)	// Multiple bytes in sequence
+
+
+///
+///
+#define TRF_ERROR		1
+#define TRF_NO_ERROR	0
+
 //---- Direct commands ------------------------------------------
 
-//TODO: Add TRF_CMD_
+// TODO: ??
+#define TRF_CMD_IDLE						0x00
 
-#define IDLE						0x00
+// This command starts a Power on Reset
+#define TRF_CMD_SOFT_INIT					0x03
 
-//This command starts a Power on Reset
-#define SOFT_INIT					0x03
+// This command executes the initial collision avoidance and sends out IRQ after 5 ms from establishing RF
+// field (so the MCU can start sending commands/data). If the external RF field is present (higher than the
+// level set in NFC Low Field Detection Level register (0x16)) then the RF field can not be switched on and
+// hence a different IRQ is returned.
+#define TRF_CMD_INITIAL_RF_COLLISION		0x04
 
-//This command executes the initial collision avoidance and sends out IRQ after 5 ms from establishing RF
-//field (so the MCU can start sending commands/data). If the external RF field is present (higher than the
-//level set in NFC Low Field Detection Level register (0x16)) then the RF field can not be switched on and
-//hence a different IRQ is returned.
-#define INITIAL_RF_COLLISION		0x04
+// This command executes the response collision avoidance and sends out IRQ after 75 탎 from establishing
+// RF field (so the MCU can start sending commands/data). If the external RF field is present (higher than
+// the level set in NFC Low Field Detection Level register (0x16)) then the RF field can not be switched on
+// and hence a different IRQ is returned.
+#define TRF_CMD_RESPONSE_RF_COLLISION_N		0x05
 
-//This command executes the response collision avoidance and sends out IRQ after 75 탎 from establishing
-//RF field (so the MCU can start sending commands/data). If the external RF field is present (higher than
-//the level set in NFC Low Field Detection Level register (0x16)) then the RF field can not be switched on
-//and hence a different IRQ is returned.
-#define RESPONSE_RF_COLLISION_N		0x05
+// This command executes the response collision avoidance without random delay. It sends out IRQ after 75
+// 탎 from establishing RF field (so the MCU can start sending commands/data). If the external RF field is
+// present (higher than the level set in NFC Low Field Detection Level register (0x16)) then the RF field can
+// not be switched on and hence a different IRQ is returned.
+#define TRF_CMD_RESPONSE_RF_COLLISION_0		0x06
 
-//This command executes the response collision avoidance without random delay. It sends out IRQ after 75
-//탎 from establishing RF field (so the MCU can start sending commands/data). If the external RF field is
-//present (higher than the level set in NFC Low Field Detection Level register (0x16)) then the RF field can
-//not be switched on and hence a different IRQ is returned.
-#define RESPONSE_RF_COLLISION_0		0x06
+// The reset command clears the FIFO contents and FIFO status register (0x1C). It also clears the register
+// storing the collision error location (0x0E).
+#define	TRF_CMD_FIFO_RESET					0x0F
 
-//The reset command clears the FIFO contents and FIFO status register (0x1C). It also clears the register
-//storing the collision error location (0x0E).
-#define	RESET						0x0F
+// Same as TRANSMIT_CRC with CRC excluded.
+#define TRF_CMD_TRANSMIT_NO_CRC				0x10
 
-//Same as TRANSMIT_CRC with CRC excluded.
-#define TRANSMIT_NO_CRC				0x10
+// The transmission command must be sent first, followed by transmission length bytes, and FIFO data. The
+// reader starts transmitting after the first byte is loaded into the FIFO. The CRC byte is included in the
+// transmitted sequence.
+#define TRF_CMD_TRANSMIT_CRC				0x11
 
-//The transmission command must be sent first, followed by transmission length bytes, and FIFO data. The
-//reader starts transmitting after the first byte is loaded into the FIFO. The CRC byte is included in the
-//transmitted sequence.
-#define TRANSMIT_CRC				0x11
+// Same as DELAY_TRANSMIT_CRC with CRC excluded.
+#define TRF_CMD_DELAY_TRANSMIT_NO_CRC		0x12
 
-//Same as DELAY_TRANSMIT_CRC with CRC excluded.
-#define DELAY_TRANSMIT_NO_CRC		0x12
+// The transmission command must be sent first, followed by the transmission length bytes, and FIFO data.
+// The reader transmission is triggered by the TX timer.
+#define TRF_CMD_DELAY_TRANSMIT_CRC			0x13
 
-//The transmission command must be sent first, followed by the transmission length bytes, and FIFO data.
-//The reader transmission is triggered by the TX timer.
-#define DELAY_TRANSMIT_CRC			0x13
+// When this command is received, the reader transmits the next slot command. The next slot sign is defined
+// by the protocol selection.
+#define TRF_CMD_TRANSMIT_NEXT_SLOT			0x14
 
-//When this command is received, the reader transmits the next slot command. The next slot sign is defined
-//by the protocol selection.
-#define TRANSMIT_NEXT_SLOT			0x14
+// TODO:
+#define TRF_CMD_CLOSE_SLOT_SEQUENCE			0x15
 
-//TODO:
-#define CLOSE_SLOT_SEQUENCE			0x15
+// The block receiver command puts the digital part of receiver (bit decoder and framer) in reset mode. This
+// is useful in an extremely noisy environment, where the noise level could otherwise cause a constant
+// switching of the subcarrier input of the digital part of the receiver. The receiver (if not in reset) would try to
+// catch a SOF signal, and if the noise pattern matched the SOF pattern, an interrupt would be generated,
+// falsely signaling the start of an RX operation. A constant flow of interrupt requests can be a problem for
+// the external system (MCU), so the external system can stop this by putting the receive decoders in reset
+// mode. The reset mode can be terminated in two ways. The external system can send the enable receiver
+// command. The reset mode is also automatically terminated at the end of a TX operation. The receiver can
+// stay in reset after end of TX if the RX wait time register (0x08) is set. In this case, the receiver is enabled
+// at the end of the wait time following the transmit operation.
+#define TRF_CMD_STOP_DECODERS				0x16
 
-//The block receiver command puts the digital part of receiver (bit decoder and framer) in reset mode. This
-//is useful in an extremely noisy environment, where the noise level could otherwise cause a constant
-//switching of the subcarrier input of the digital part of the receiver. The receiver (if not in reset) would try to
-//catch a SOF signal, and if the noise pattern matched the SOF pattern, an interrupt would be generated,
-//falsely signaling the start of an RX operation. A constant flow of interrupt requests can be a problem for
-//the external system (MCU), so the external system can stop this by putting the receive decoders in reset
-//mode. The reset mode can be terminated in two ways. The external system can send the enable receiver
-//command. The reset mode is also automatically terminated at the end of a TX operation. The receiver can
-//stay in reset after end of TX if the RX wait time register (0x08) is set. In this case, the receiver is enabled
-//at the end of the wait time following the transmit operation.
-#define STOP_DECODERS				0x16
+// This command clears the reset mode in the digital part of the receiver if the reset mode was entered by
+// the block receiver command.
+#define TRF_CMD_RUN_DECODERS				0x17
 
-//This command clears the reset mode in the digital part of the receiver if the reset mode was entered by
-//the block receiver command.
-#define RUN_DECODERS				0x17
-
-//The level of the RF carrier at RF_IN1 and RF_IN2 inputs is measured. Operating range between 300 mVP
-//and 2.1 VP (step size is 300 mV). The two values are displayed in the RSSI levels register (0x0F). The
-//command is intended for diagnostic purposes to set correct RF_IN levels. Optimum RFIN input level is
-//approximately 1.6 VP or code 5 to 6. The nominal relationship between the RF peak level and RSSI code
-//is shown in Table 5-20 and in Section 5.4.1.1.
-//NOTE:
-//If the command is executed immediately after power-up and before any communication with
-//a tag is performed, the command must be preceded by Enable RX command. The Check RF
-//commands require full operation, so the receiver must be activated by Enable RX or by a
-//normal Tag communication for the Check RF command to work properly
-#define CHECK_INTERNAL_RF			0x18
+// The level of the RF carrier at RF_IN1 and RF_IN2 inputs is measured. Operating range between 300 mVP
+// and 2.1 VP (step size is 300 mV). The two values are displayed in the RSSI levels register (0x0F). The
+// command is intended for diagnostic purposes to set correct RF_IN levels. Optimum RFIN input level is
+// approximately 1.6 VP or code 5 to 6. The nominal relationship between the RF peak level and RSSI code
+// is shown in Table 5-20 and in Section 5.4.1.1.
+// NOTE:
+// If the command is executed immediately after power-up and before any communication with
+// a tag is performed, the command must be preceded by Enable RX command. The Check RF
+// commands require full operation, so the receiver must be activated by Enable RX or by a
+// normal Tag communication for the Check RF command to work properly
+#define TRF_CMD_CHECK_INTERNAL_RF			0x18
 //RF_IN1 [mV_PP] 300 600 900 1200 1500 1800 2100
 
 
-//This command can be used in active mode when the RF receiver is switched on but RF output is switched
-//off. This means bit B1 = 1 in Chip Status Control Register. The level of RF signal received on the antenna
-//is measured and displayed in the RSSI Levels register (0x0F). The relation between the 3 bit code and the
-//external RF field strength [A/m] must be determinate by calculation or by experiments for each antenna
-//type as the antenna Q and connection to the RF input influence the result.
-//NOTE:
-//If the command is executed immediately after power-up and before any communication with
-//a tag is performed, the command must be preceded by an Enable RX command. The Check
-//RF commands require full operation, so the receiver must be activated by Enable RX or by a
-//normal Tag communication for the Check RF command to work properly.
-#define CHECK_EXTERNAL_RF			0x19
+// This command can be used in active mode when the RF receiver is switched on but RF output is switched
+// off. This means bit B1 = 1 in Chip Status Control Register. The level of RF signal received on the antenna
+// is measured and displayed in the RSSI Levels register (0x0F). The relation between the 3 bit code and the
+// external RF field strength [A/m] must be determinate by calculation or by experiments for each antenna
+// type as the antenna Q and connection to the RF input influence the result.
+// NOTE:
+// If the command is executed immediately after power-up and before any communication with
+// a tag is performed, the command must be preceded by an Enable RX command. The Check
+// RF commands require full operation, so the receiver must be activated by Enable RX or by a
+// normal Tag communication for the Check RF command to work properly.
+#define TRF_CMD_CHECK_EXTERNAL_RF			0x19
 //RF_IN1 [mV_PP] 40 60 80 100 140 180 300
 
-//This command should be executed when the MCU determines that no TAG response is coming and when
-//the RF and receivers are switched ON. When this command is received, the reader observes the digitized
-//receiver output. If more than two edges are observed in 100 ms, the window comparator voltage is
-//increased. The procedure is repeated until the number of edges (changes of logical state) of the digitized
-//reception signal is less than 2 (in 100 ms). The command can reduce the input sensitivity in 5-dB
-//increments up to 15 dB. This command ensures better operation in a noisy environment. The gain setting
-//is reset to maximum gain at EN = 0 and POR = 1.
-#define ADJUST_GAIN					0x1A
+// This command should be executed when the MCU determines that no TAG response is coming and when
+// the RF and receivers are switched ON. When this command is received, the reader observes the digitized
+// receiver output. If more than two edges are observed in 100 ms, the window comparator voltage is
+// increased. The procedure is repeated until the number of edges (changes of logical state) of the digitized
+// reception signal is less than 2 (in 100 ms). The command can reduce the input sensitivity in 5-dB
+// increments up to 15 dB. This command ensures better operation in a noisy environment. The gain setting
+// is reset to maximum gain at EN = 0 and POR = 1.
+#define TRF_CMD_ADJUST_GAIN					0x1A
 
 //---- END -------------------------------------------------------
 
@@ -166,66 +178,6 @@
 
 //---- END -------------------------------------------------------
 
-//---- IRQ -------------------------------------------------------
-
-//---- IRQ bits --------------------------------------------------
-
-// Table 6-20. IRQ Status Register (0x0C)
-//
-
-// Signals that TX is in progress.
-// The flag is set at the start of TX but the interrupt request (IRQ = 1) is sent when TX is finished.
-#define TRF_IRQ_TX		(1<<7)
-
-// Signals that RX SOF was received and RX is in progress.
-// The flag is set at the start of RX but the interrupt request (IRQ = 1) is sent when RX is finished.
-#define TRF_IRQ_RX		(1<<6)
-
-// Signals the FIFO is 1/3 > FIFO > 2/3. Signals FIFO high or low
-#define TRF_IRQ_FIFO	(1<<5)
-
-// CRC error. Indicates receive CRC error only if B7 (no RX CRC) of ISO Control register is set to 0.
-#define TRF_IRQ_ERR1	(1<<4)
-
-// Parity error Indicates parity error for ISO14443A
-#define TRF_IRQ_ERR2	(1<<3)
-
-// Byte framing or EOF error. Indicates framing error
-#define TRF_IRQ_ERR3	(1<<2)
-
-// Collision error for ISO14443A and ISO15693 single subcarrier. Bit is set if more
-// then 6 or 7 (as defined in register 0x01) are detected inside one bit period of ISO14443A 106 kbps.
-// Collision error bit can also be triggered by external noise.
-#define TRF_IRQ_COL		(1<<1)
-
-// No response within the "No-response time" defined in RX No-response Wait Time register (0x07).
-// Signals the MCU that next slot command can be sent. Only for ISO15693.
-#define TRF_IRQ_NORESP	(1<<0)
-
-// Table 6-21. IRQ Status Register (0x0C) for NFC and Card Emulation Operation
-//
-
-//#define TRF_IRQ_NFC_Tx_End						(1<<7)
-//#define TRF_IRQ_NFC_Rx_Start						(1<<6)
-//#define TRF_IRQ_NFC_FIFO_High						(1<<5) << Those 3 are shared between all modes
-
-// Any protocol error
-#define TRF_IRQ_NFC_Protocol_Error					(1<<4)
-
-// SDD (passive target at 106 kbps) successfully finished
-#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
-
-// Sufficient RF signal level for operation was reached or lost
-#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
-
-// The system has finished collision avoidance and the minimum wait time is finished elapsed.
-#define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
-
-// The external RF field was present so the collision avoidance could not be carried out.
-#define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
-
-//---- END -------------------------------------------------------
-
 //---- REGISTER SETTINGS -----------------------------------------
 
 // Table 6-2. Chip Status Control Register (0x00) #############################################################
@@ -263,7 +215,7 @@
 //Selects the VIN voltage range
 //1 = 5 V operation
 //0 = 3 V operation
-#define TRF_CSR_5V 				(1<<0)
+ #define TRF_CSR_5V 			(1<<0)
 
 // Table 6-3. ISO Control Register (0x01) #############################################################
 //
@@ -313,7 +265,7 @@
 //B6 dir_mode Direct mode type selection
 //0 = Direct Mode 0
 //1 = Direct Mode 1
-#define TRF_PROTOCOL_Dir_Mode		(1<<6)
+#define TRF_PROTOCOL_Dir_Mode1		(1<<6)
 
 //B5 rfid RFID / Reserved
 //0 = RFID Mode
@@ -432,6 +384,61 @@
 #define TRF_NFC_RX_SPEC_Gain_Reduction_10dB (2<<2) //
 #define TRF_NFC_RX_SPEC_Gain_Reduction_15dB (3<<2) //Sets the RX gain reduction, and reduces sensitivity
 
+// Table 6-20. IRQ Status Register (0x0C) ################################################################
+//
+//
+
+// Signals that TX is in progress.
+// The flag is set at the start of TX but the interrupt request (IRQ = 1) is sent when TX is finished.
+#define TRF_IRQ_TX		(1<<7)
+
+// Signals that RX SOF was received and RX is in progress.
+// The flag is set at the start of RX but the interrupt request (IRQ = 1) is sent when RX is finished.
+#define TRF_IRQ_RX		(1<<6)
+
+// Signals the FIFO is 1/3 > FIFO > 2/3. Signals FIFO high or low
+#define TRF_IRQ_FIFO	(1<<5)
+
+// CRC error. Indicates receive CRC error only if B7 (no RX CRC) of ISO Control register is set to 0.
+#define TRF_IRQ_ERR1	(1<<4)
+
+// Parity error Indicates parity error for ISO14443A
+#define TRF_IRQ_ERR2	(1<<3)
+
+// Byte framing or EOF error. Indicates framing error
+#define TRF_IRQ_ERR3	(1<<2)
+
+// Collision error for ISO14443A and ISO15693 single subcarrier. Bit is set if more
+// then 6 or 7 (as defined in register 0x01) are detected inside one bit period of ISO14443A 106 kbps.
+// Collision error bit can also be triggered by external noise.
+#define TRF_IRQ_COL		(1<<1)
+
+// No response within the "No-response time" defined in RX No-response Wait Time register (0x07).
+// Signals the MCU that next slot command can be sent. Only for ISO15693.
+#define TRF_IRQ_NORESP	(1<<0)
+
+// Table 6-21. IRQ Status Register (0x0C) for NFC and Card Emulation Operation
+//
+
+//#define TRF_IRQ_NFC_Tx_End						(1<<7)
+//#define TRF_IRQ_NFC_Rx_Start						(1<<6)
+//#define TRF_IRQ_NFC_FIFO_High						(1<<5) << Those 3 are shared between all modes
+
+// Any protocol error
+#define TRF_IRQ_NFC_Protocol_Error					(1<<4)
+
+// SDD (passive target at 106 kbps) successfully finished
+#define TRF_IRQ_NFC_SDD_Finished					(1<<3)
+
+// Sufficient RF signal level for operation was reached or lost
+#define TRF_IRQ_NFC_RF_Field_Change					(1<<2)
+
+// The system has finished collision avoidance and the minimum wait time is finished elapsed.
+#define TRF_IRQ_NFC_Col_Avoid_Finished				(1<<1)
+
+// The external RF field was present so the collision avoidance could not be carried out.
+#define TRF_IRQ_NFC_Col_Avoid_Failed				(1<<0)
+
 // Table 6-27. Adjustable FIFO IRQ Levels Register (0x14) #############################################################
 //
 //
@@ -539,11 +546,6 @@
 //---- END -------------------------------------------------------
 
 //---- OTHER -----------------------------------------------------
-
-// Power Supply Regulator Setting
-// VDD_RF = 3.3 V, VDD_A = 3.3 V, VDD_X = 3.3 V
-// TODO: check if needed
-#define TRF_POWER_SETTING 0x06
 
 #define TRF_FIFO_SIZE 128
 

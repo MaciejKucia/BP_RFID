@@ -66,11 +66,11 @@ extern void printf(const char *pcString, ...);
 extern int UARTwrite(const char *pcBuf, unsigned long ulLen);
 #ifdef UART_BUFFERED
 extern int UARTPeek(unsigned char ucChar);
-extern void UARTFlushTx(tBoolean bDiscard);
+extern void UARTFlushTx(unsigned char bDiscard);
 extern void UARTFlushRx(void);
 extern int UARTRxBytesAvail(void);
 extern int UARTTxBytesFree(void);
-extern void UARTEchoSet(tBoolean bEnable);
+extern void UARTEchoSet(unsigned char bEnable);
 #endif
 
 void Launchpad_UART_Init(void);
